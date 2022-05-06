@@ -32,49 +32,49 @@ using namespace std;
 
 class PortableServer {
 public:
-    PortableServer() {
+    PortableServer ( ) {
 
     }
 
-    void waitForClient();
-  
-    void receiveMultithreaded(int i);
-    void sendToClient(int index, string message);
+    void waitForClient ( );
 
-    vector<string> getLastMessages() const;
-    shared_ptr<mutex> getMutex() const;
-    bool newMessage(int index);
+    void receiveMultithreaded (int i);
+    void sendToClient (int index, string message);
 
-    string getIP() const;
+    vector<string> getLastMessages ( ) const;
+    shared_ptr<mutex> getMutex ( ) const;
+    bool newMessage (int index);
 
-    inline int getClientCount() {
-        connectedMtx.lock();
-        int temp = clientSockets.size();
-        connectedMtx.unlock();
+    string getIP ( ) const;
+
+    inline int getClientCount ( ) {
+        connectedMtx.lock ( );
+        int temp = clientSockets.size ( );
+        connectedMtx.unlock ( );
         return 0;
     }
-    void portableConnect();
+    void portableConnect ( );
 
     /**
      * @brief Threadsafe way to set the wait bool for a client
-     * 
-     * @param clientIndex 
-     * @param newWaitStatus 
+     *
+     * @param clientIndex
+     * @param newWaitStatus
      */
-    inline void setWait(int clientIndex, bool newWaitStatus){
-        waitMutices[clientIndex].lock();
+    inline void setWait (int clientIndex, bool newWaitStatus) {
+        waitMutices[clientIndex].lock ( );
         wait[clientIndex] = newWaitStatus;
-        waitMutices[clientIndex].unlock();
+        waitMutices[clientIndex].unlock ( );
     }
     /**
-    * @brief Threadsafe way to get wait bool. 
-    * 
-    * @param newWaitStatus 
+    * @brief Threadsafe way to get wait bool.
+    *
+    * @param newWaitStatus
     */
-    inline bool getWait(int clientIndex){
-        waitMutices[clientIndex].lock();
+    inline bool getWait (int clientIndex) {
+        waitMutices[clientIndex].lock ( );
         return wait[clientIndex];
-        waitMutices[clientIndex].unlock();
+        waitMutices[clientIndex].unlock ( );
     }
 
 private:
@@ -83,17 +83,17 @@ private:
     int addrlen;
     vector<int> clientSockets;
     struct sockaddr_in address;
-    int portableSend(int socket, const char* message) const;
-    int portableRecv(int socket, char* recvBuffer);
-    void portableShutdown(int socket);
+    int portableSend (int socket, const char* message) const;
+    int portableRecv (int socket, char* recvBuffer);
+    void portableShutdown (int socket);
 #elif _WIN32
     vector<SOCKET> clientSockets;
 
-    int portableSend(SOCKET socket, const char* message) const;
-    int portableRecv(SOCKET socket, char* recvBuffer);
-    void portableShutdown(SOCKET socket);
+    int portableSend (SOCKET socket, const char* message) const;
+    int portableRecv (SOCKET socket, char* recvBuffer);
+    void portableShutdown (SOCKET socket);
 #endif
-    void respondToCommands(int index);
+    void respondToCommands (int index);
     string port = "8080";
     int recvbuflen = 512;
 
@@ -106,5 +106,5 @@ private:
     vector<mutex> waitMutices;
     vector<bool> wait;
     vector<bool> gotNewMessage;
-    shared_ptr<mutex> mtx = shared_ptr<mutex>(new mutex());
+    shared_ptr<mutex> mtx = shared_ptr<mutex> (new mutex ( ));
 };

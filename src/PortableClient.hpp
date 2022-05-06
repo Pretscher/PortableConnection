@@ -48,38 +48,38 @@ class PortableClient {
 public:
     int myPlayerIndex;
 
-    PortableClient();
-    void receiveMultithreaded();
-    void sendToServer(string message);
+    PortableClient ( );
+    void receiveMultithreaded ( );
+    void sendToServer (string message);
 
-    string getLastMessage() const;
-    bool isConnected() const;
-    shared_ptr<mutex> getMutex() const;
-    bool newMessage();
+    string getLastMessage ( ) const;
+    bool isConnected ( ) const;
+    shared_ptr<mutex> getMutex ( ) const;
+    bool newMessage ( );
 
-    string getIP() const;
+    string getIP ( ) const;
 
-    void connectToServer(string ip);
-    void searchHosts();
+    void connectToServer (string ip);
+    void searchHosts ( );
 
-    bool isConnected() {
-        connectedMtx.lock();
+    bool isConnected ( ) {
+        connectedMtx.lock ( );
         bool temp = connected;
-        connectedMtx.unlock();
+        connectedMtx.unlock ( );
         return temp;
     }
 
-    void pushToAvailableHosts(string s) {
-        avHostsMtx.lock();
-        avHosts.push_back(s);
-        avHostsMtx.unlock();
+    void pushToAvailableHosts (string s) {
+        avHostsMtx.lock ( );
+        avHosts.push_back (s);
+        avHostsMtx.unlock ( );
     }
 
-    vector<string> getAvailableHosts() {
-        avHostsMtx.lock();
+    vector<string> getAvailableHosts ( ) {
+        avHostsMtx.lock ( );
         vector<string> copy = avHosts;
-        avHostsMtx.unlock();
-        return std::move(copy);
+        avHostsMtx.unlock ( );
+        return std::move (copy);
     }
 
 #ifdef  __linux__ 
@@ -87,43 +87,43 @@ public:
     int serverSocket;
     struct sockaddr_in address;
     vector<int> connectSockets;
-    int portableConnect(const char* connectIP);
-    int portableRecv(int socket, char* recvBuf);
-    int portableSend(int socket, const char* message) const;
-    void portableShutdown(int socket);
+    int portableConnect (const char* connectIP);
+    int portableRecv (int socket, char* recvBuf);
+    int portableSend (int socket, const char* message) const;
+    void portableShutdown (int socket);
 #elif _WIN32
     SOCKET serverSocket;
     vector<SOCKET> connectSockets;
-    SOCKET portableConnect(const char* connectIP);
-    int portableRecv(SOCKET& socket, char* recvBuf);
-    int portableSend(SOCKET& socket, const char* message) const;
-    void portableShutdown(SOCKET& socket);
+    SOCKET portableConnect (const char* connectIP);
+    int portableRecv (SOCKET& socket, char* recvBuf);
+    int portableSend (SOCKET& socket, const char* message) const;
+    void portableShutdown (SOCKET& socket);
 #endif
-   /**
-    * @brief Threadsafe way to set wait bool. 
-    * 
-    * @param newWaitStatus 
-    */
-    inline void setWait(bool newWaitStatus){
-        waitMutex.lock();
+    /**
+     * @brief Threadsafe way to set wait bool.
+     *
+     * @param newWaitStatus
+     */
+    inline void setWait (bool newWaitStatus) {
+        waitMutex.lock ( );
         wait = newWaitStatus;
-        waitMutex.unlock();
+        waitMutex.unlock ( );
     }
     /**
-    * @brief Threadsafe way to get wait bool. 
-    * 
-    * @param newWaitStatus 
+    * @brief Threadsafe way to get wait bool.
+    *
+    * @param newWaitStatus
     */
-    inline bool getWait(){
-        waitMutex.lock();
+    inline bool getWait ( ) {
+        waitMutex.lock ( );
         return wait;
-        waitMutex.unlock();
+        waitMutex.unlock ( );
     }
 
 private:
-    void getMyIndex();
-    string readMsgBuffer(int msgLenght, char recvbuf[]);
-    string receiveMessage();
+    void getMyIndex ( );
+    string readMsgBuffer (int msgLenght, char recvbuf[]);
+    string receiveMessage ( );
 
     string port = "8080";
     string lastMessage;
@@ -134,18 +134,18 @@ private:
     mutex waitMutex;
     bool wait = false;//initially set to false because the first message is always from the client
 
- 
+
 
     bool gotNewMessage = false;
 
 
-    void setConnected(bool c) {
-        connectedMtx.lock();
+    void setConnected (bool c) {
+        connectedMtx.lock ( );
         connected = c;
-        connectedMtx.unlock();
+        connectedMtx.unlock ( );
     }
 
-    
+
     mutex avHostsMtx;
     vector<string> avHosts;
 };
