@@ -121,6 +121,10 @@ public:
     }
 
 private:
+
+    PortableClient(PortableClient& copy) {
+
+    }
     void getMyIndex ( );
     string readMsgBuffer (int msgLenght, char recvbuf[]);
     string receiveMessage ( );
@@ -147,7 +151,7 @@ private:
 
 
     thread searchingHosts;
-    
+
     mutex avHostsMtx;
     vector<string> avHosts;
 };

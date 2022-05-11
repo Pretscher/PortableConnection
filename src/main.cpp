@@ -6,10 +6,10 @@ using namespace std;
 
 void initConnection(bool isServer) {
     if(isServer == true) {
-        PortableServer server = PortableServer();
+        PortableServer server;
         server.waitForClient();
     } else {
-        PortableClient client = PortableClient();
+        PortableClient client;
         client.searchHosts();
         vector<string> avHosts = client.getAvailableHosts();
         cout << "Please choose your host by index from the following list:\n";
@@ -28,9 +28,10 @@ void initConnection(bool isServer) {
 }
 
 int main() {
-    bool isServer = false;
+    bool isServer = true;
     thread networking(&initConnection, isServer);
     while(true){
+        
     }
     return 0;
 }

@@ -32,10 +32,9 @@ using namespace std;
 
 class PortableServer {
 public:
-    PortableServer ( ) {
+    PortableServer() {
 
     }
-
     void waitForClient ( );
 
     void receiveMultithreaded (int i);
@@ -78,7 +77,9 @@ public:
     }
 
 private:
+    PortableServer(PortableServer& copy) {
 
+    }
 #ifdef  __linux__ 
     int addrlen;
     vector<int> clientSockets;
