@@ -4,30 +4,33 @@
 #include <thread>
 using namespace std;
 
-
-void initConnection (bool isServer);
-int main ( ) {
-    bool isServer = true;
-    thread networking (&initConnection, isServer);
-
-    return 0;
-}
-
-void initConnection (bool isServer) {
-    if (isServer) {
-        PortableServer server = PortableServer ( );
-        server.waitForClient ( );
-    }
-    else {
-        PortableClient client = PortableClient ( );
-        client.searchHosts ( );
-        vector<string> avHosts = client.getAvailableHosts ( );
-        cout << "Please choose your host by index from the following list:";
-        for (unsigned int i = 0; i < avHosts.size ( ); i++) {
+void initConnection(bool isServer) {
+    if(isServer == true) {
+        PortableServer server = PortableServer();
+        server.waitForClient();
+    } else {
+        PortableClient client = PortableClient();
+        client.searchHosts();
+        vector<string> avHosts = client.getAvailableHosts();
+        cout << "Please choose your host by index from the following list:\n";
+        for (unsigned int i = 0; i < avHosts.size(); i++) {
             cout << "\nHost at index [" << i << "]: " << avHosts[i] << "\n";
         }
-        int chosenIndex;
+        string chosenIndex;
         cin >> chosenIndex;
-        client.connectToServer (avHosts[chosenIndex]);
+        int chosenIndexInt = stoi(chosenIndex);
+        if(chosenIndexInt > avHosts.size()) {
+            cout << "Index invalid.\n";
+            exit(0);
+        }
+        client.connectToServer(avHosts[chosenIndexInt]);
     }
+}
+
+int main() {
+    bool isServer = false;
+    thread networking(&initConnection, isServer);
+    while(true){
+    }
+    return 0;
 }

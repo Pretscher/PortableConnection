@@ -146,6 +146,8 @@ private:
     }
 
 
+    thread searchingHosts;
+    
     mutex avHostsMtx;
     vector<string> avHosts;
 };

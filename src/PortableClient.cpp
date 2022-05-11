@@ -277,8 +277,9 @@ void searchHostsMultiThreaded (PortableClient* client) {
  * @brief Searches for hosts in local network that use sockets on this port.
  *
  */
-void PortableClient::searchHosts ( ) {
-    thread searchingHosts = std::thread (&searchHostsMultiThreaded, this);
+
+void PortableClient::searchHosts () {
+    searchingHosts = std::thread(&searchHostsMultiThreaded, this);
 }
 
 #ifdef __linux__ 

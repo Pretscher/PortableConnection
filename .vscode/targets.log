@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Fri May  6 14:56:11 2022
+# Make data base, printed on Wed May 11 20:28:54 2022
 
 # Variables
 
@@ -25,7 +25,7 @@ SNAP_INSTANCE_KEY =
 # environment
 GJS_DEBUG_OUTPUT = stderr
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /run/user/1000/vscode-ipc-051d9718-87e8-40fc-a519-787ad54ec903.sock
+VSCODE_IPC_HOOK_EXTHOST = /run/user/1000/vscode-ipc-0e9cbd38-765e-486d-b65b-8dec2320445a.sock
 # environment
 LC_NAME = de_DE.UTF-8
 # environment
@@ -105,15 +105,15 @@ SNAP_REEXEC =
 # environment
 VSCODE_VERBOSE_LOGGING = true
 # environment
-VSCODE_PID = 23494
+VSCODE_PID = 4001
 # environment
 XDG_SESSION_TYPE = x11
 # automatic
 ?D = $(patsubst %/,%,$(dir $?))
 # environment
-BAMF_DESKTOP_FILE_HINT = /var/lib/snapd/desktop/applications/code_code-url-handler.desktop
+BAMF_DESKTOP_FILE_HINT = /var/lib/snapd/desktop/applications/code_code.desktop
 # environment
-SESSION_MANAGER = local/Allahs-Ubuntu:@/tmp/.ICE-unix/1601,unix/Allahs-Ubuntu:/tmp/.ICE-unix/1601
+SESSION_MANAGER = local/Allahs-Ubuntu:@/tmp/.ICE-unix/1623,unix/Allahs-Ubuntu:/tmp/.ICE-unix/1623
 # automatic
 *F = $(notdir $*)
 # environment
@@ -134,8 +134,6 @@ SHELL = /bin/sh
 MAKECMDGOALS := all
 # environment
 XMODIFIERS = @im=ibus
-# environment
-LD_LIBRARY_PATH = /opt/google/chrome:/opt/google/chrome/lib
 # environment
 GJS_DEBUG_TOPICS = JS ERROR;JS LOG
 # environment
@@ -161,7 +159,7 @@ LC_TIME = de_DE.UTF-8
 # environment
 SNAP = /snap/code/95
 # environment
-INVOCATION_ID = 225484550a7e4032976b11fbae2b954d
+INVOCATION_ID = 8c896dfb63ed482e9e085d7ded5daf6a
 # environment
 SNAP_REVISION = 95
 # environment
@@ -185,21 +183,19 @@ LS_COLORS =
 # environment
 DESKTOP_SESSION = ubuntu
 # environment
-ORIGINAL_XDG_CURRENT_DESKTOP = Unity
+ORIGINAL_XDG_CURRENT_DESKTOP = ubuntu:GNOME
 # 'override' directive
 GNUMAKEFLAGS := 
 # environment
-CHROME_WRAPPER = /opt/google/chrome/google-chrome
-# environment
 LOGNAME = allah
 # environment
-GIO_LAUNCHED_DESKTOP_FILE = /var/lib/snapd/desktop/applications/code_code-url-handler.desktop
+GIO_LAUNCHED_DESKTOP_FILE = /var/lib/snapd/desktop/applications/code_code.desktop
 # environment
 SNAP_ARCH = amd64
 # makefile
 .DEFAULT_GOAL := 
 # environment
-SYSTEMD_EXEC_PID = 1650
+SYSTEMD_EXEC_PID = 1673
 # environment
 DISPLAY = :0
 # environment
@@ -215,13 +211,11 @@ SNAP_DATA = /var/snap/code/95
 # environment
 SNAP_CONTEXT = l4ovw4AvhsuoWXc77ARZIefKHFN1YwxLdf2NibSuuU9NIkMXDomA
 # environment
-MANAGERPID = 1204
-# environment
-MM_NOTTTY = 1
+MANAGERPID = 1214
 # environment
 LC_MEASUREMENT = de_DE.UTF-8
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 23457
+GIO_LAUNCHED_DESKTOP_FILE_PID = 3963
 # environment
 _ = /snap/code/95/usr/share/code/code
 # environment
@@ -233,7 +227,7 @@ GPG_AGENT_INFO = /run/user/1000/gnupg/S.gpg-agent:0:1
 # environment
 GDK_PIXBUF_MODULE_FILE = /home/allah/snap/code/common/.cache/gdk-pixbuf-loaders.cache
 # environment
-JOURNAL_STREAM = 8:33055
+JOURNAL_STREAM = 8:35993
 # environment
 XDG_SESSION_CLASS = user
 # environment
@@ -242,8 +236,6 @@ VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
 HOME = /home/allah
 # environment
 QT_IM_MODULE = ibus
-# environment
-CHROME_VERSION_EXTRA = stable
 # environment
 ELECTRON_RUN_AS_NODE = 1
 # environment
@@ -279,7 +271,7 @@ LC_IDENTIFICATION = de_DE.UTF-8
 # environment
 SNAP_LIBRARY_PATH = /var/lib/snapd/lib/gl:/var/lib/snapd/lib/gl32:/var/lib/snapd/void
 # variable set hash-table stats:
-# Load=133/1024=13%, Rehash=0, Collisions=5/160=3%
+# Load=129/1024=13%, Rehash=0, Collisions=5/156=3%
 
 # Pattern-specific Variable Values
 
@@ -287,7 +279,6 @@ SNAP_LIBRARY_PATH = /var/lib/snapd/lib/gl:/var/lib/snapd/lib/gl32:/var/lib/snapd
 
 # Directories
 
- 
 # . (device 66309, inode 2762719): 8 files, no impossibilities.
 
 # 8 files, no impossibilities in 1 directories.
@@ -305,6 +296,7 @@ Makefile:
 #  File has been updated.
 #  Failed to be updated.
 
+ 
 # Not a target:
 .DEFAULT:
 #  Implicit rule search has not been done.
@@ -346,6 +338,6 @@ GNUmakefile:
 # strcache performance: lookups = 19 / hit rate = 15%
 # hash-table stats:
 # Load=16/8192=0%, Rehash=0, Collisions=0/19=0%
-# Finished Make data base on Fri May  6 14:56:11 2022
+# Finished Make data base on Wed May 11 20:28:54 2022
 
  
