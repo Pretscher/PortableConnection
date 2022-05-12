@@ -7,10 +7,10 @@ void PortableServer::waitForClient() {
 }
 
 void PortableServer::sendToClient(int clientIndex, string message) {
-    if(wait[clientIndex] == false) {
+    if(getWait(clientIndex) == false) {
         int iResult = portableSend(clientSockets[clientIndex], message.c_str());
         if(loggingEnabled == true) cout << "Sent message '" << message << "' to client " << clientIndex << "\n";
-        wait[clientIndex] = true;
+        setWait(clientIndex, true);
     }
 }
 
@@ -33,7 +33,7 @@ void PortableServer::receiveMultithreaded(int clientIndex) {
             }
             delete[] recvBuffer;
             setLastMessage(clientIndex, newMsg);
-            wait[clientIndex] = false;
+            setWait(clientIndex, false);
             //connection setup
             if(loggingEnabled == true) cout << "Received message '" << getLastMessageFromClient(clientIndex) << "' from client " << clientIndex << "\n";
             this->respondToCommands(clientIndex);
@@ -62,7 +62,7 @@ void PortableServer::respondToCommands(int clientIndex) {
     if(isCommand == true) {
         lastMessage.clear();
         setGotNewMessage(clientIndex, false);
-        wait[clientIndex] = true;
+        setWait(clientIndex, true);
     }
 }
 
@@ -129,9 +129,12 @@ vector<thread> connectThreads;
  */
 void PortableServer::portableConnect() {
     connectedMtx.lock();
-    wait.push_back(false);
+
 
     int mutexIndex = lastMessages.size();
+    waitMutices[mutexIndex].lock();
+    wait.push_back(false);
+    waitMutices[mutexIndex].unlock();
     lastMessageMutices[mutexIndex].lock();
     lastMessages.push_back(string());
     lastMessageMutices[mutexIndex].unlock();

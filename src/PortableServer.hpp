@@ -139,11 +139,20 @@ public:
         gotNewMessageMutices[clientIndex].unlock();
         return temp;
     }
+
+    inline bool isWaiting(int clientIndex){
+        waitMutices[clientIndex].lock();
+        bool temp = wait[clientIndex];
+        waitMutices[clientIndex].unlock();
+        return temp;
+    }
 private:
     #define maxConnections 12
     //cant resize a vector of mutices or add elements, so we need a fixed amount
     mutex lastMessageMutices[maxConnections];
     mutex gotNewMessageMutices[maxConnections];
+    mutex waitMutices[maxConnections];
+    vector<bool> wait;
     vector<string> lastMessages;
     vector<bool> gotNewMessage;
     /**
@@ -164,7 +173,6 @@ private:
         gotNewMessageMutices[clientIndex].unlock();
     }
 
-
     /**
      * @brief reads the last message from a client and, if it was a command defined in this function, responds accordingly
      *
@@ -176,8 +184,4 @@ private:
 
     bool connected = false;
     mutex connectedMtx;
-    vector<mutex> waitMutices;
-    vector<bool> wait;
-
-
 };
