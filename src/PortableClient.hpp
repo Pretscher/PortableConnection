@@ -66,13 +66,6 @@ public:
     */
     void searchHosts(int waitTime);
 
-    bool isConnected() {
-        connectedMtx.lock();
-        bool temp = connected;
-        connectedMtx.unlock();
-        return temp;
-    }
-
     void pushToAvailableHosts(string s) {
         avHostsMtx.lock();
         avHosts.push_back(s);
@@ -161,8 +154,34 @@ public:
         waitMutex.unlock();
         return wait;
     }
+
+    
     bool loggingEnabled = true;
+
+    /**
+     * @brief Threadsafe way to check if the client is connected to a server
+     * 
+     * @return true 
+     * @return false 
+     */
+    inline bool isConnected() {
+        connectedMtx.lock();
+        bool temp = connected;
+        connectedMtx.unlock();
+        return temp;
+    }
 private:
+    /**
+     * @brief Threadsafe. Used to communicate the clients connection status to the main thread. 
+     * Should only be set from Client side, thus private.
+     * 
+     * @param connectStatus 
+     */
+    inline void setConnected(bool connectStatus) {
+        connectedMtx.lock();
+        connected = connectStatus;
+        connectedMtx.unlock();
+    }
     PortableClient(PortableClient& copy) {
     }
     /**
@@ -218,25 +237,6 @@ private:
 
 
     bool gotNewMessage = false;
-
-
-    void setConnected(bool c) {
-        connectedMtx.lock();
-        connected = c;
-        connectedMtx.unlock();
-    }
-    /**
-     * @brief Threadsafe way to check if the client is connected to a server
-     * 
-     * @return true 
-     * @return false 
-     */
-    bool isConnected() {
-        connectedMtx.lock();
-        bool temp = connected;
-        connectedMtx.unlock();
-        return temp;
-    }
     
     thread searchingHosts;
 
