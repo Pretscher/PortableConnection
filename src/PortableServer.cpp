@@ -130,16 +130,15 @@ vector<thread> connectThreads;
 void PortableServer::portableConnect() {
     connectedMtx.lock();
     wait.push_back(false);
-    lastMessageMutices.push_back(mutex());
-    gotNewMessageMutices.push_back(mutex());
 
-    lastMessageMutices[lastMessageMutices.size() - 1].lock();
+    int mutexIndex = lastMessages.size();
+    lastMessageMutices[mutexIndex].lock();
     lastMessages.push_back(string());
-    lastMessageMutices[lastMessageMutices.size() - 1].unlock();
+    lastMessageMutices[mutexIndex].unlock();
 
-    gotNewMessageMutices[gotNewMessageMutices.size() - 1].lock();
+    gotNewMessageMutices[mutexIndex].lock();
     gotNewMessage.push_back(false);
-    gotNewMessageMutices[gotNewMessageMutices.size() - 1].unlock();
+    gotNewMessageMutices[mutexIndex].unlock();
 
     connectedMtx.unlock();
 #ifdef __linux__ 

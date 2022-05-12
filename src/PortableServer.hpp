@@ -140,8 +140,10 @@ public:
         return temp;
     }
 private:
-    vector<mutex> lastMessageMutices;
-    vector<mutex> gotNewMessageMutices;
+    #define maxConnections 12
+    //cant resize a vector of mutices or add elements, so we need a fixed amount
+    mutex lastMessageMutices[maxConnections];
+    mutex gotNewMessageMutices[maxConnections];
     vector<string> lastMessages;
     vector<bool> gotNewMessage;
     /**
