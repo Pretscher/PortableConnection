@@ -10,7 +10,7 @@ void initConnection(bool isServer) {
         server.waitForClient();
     } else {
         PortableClient client;
-        client.searchHosts(500);
+        client.searchHosts(1000);
         vector<string> avHosts = client.getAvailableHosts();
         cout << "Please choose your host by index from the following list:\n";
         for (unsigned int i = 0; i < avHosts.size(); i++) {

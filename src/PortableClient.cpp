@@ -25,7 +25,7 @@ PortableClient::PortableClient() {
  * @brief Request the client count from the server to calculate this client's index in the servers client array
  *
  */
-void PortableClient::getMyIndex() {
+void PortableClient::getMyIndexFromServer() {
     this->sendToServer("getMyClientIndex");
     //receive my clientIndex
     char recvbuf[recvbuflen];
@@ -49,9 +49,8 @@ void PortableClient::connectToServer(string ip) {
     connectSocketsMtx.lock();//very important mutex. We DO NOT stop the searching threads when the time is over, thus we still have to use the mutex here.
     for(int i = 0; i < copy.size(); i++) {
         if(copy.at(i).compare(ip) == 0) {
-            
             serverSocket = connectSockets.at(i);//same index, pushed back simultanioisly
-            getMyIndex();//get index in server's client array
+            getMyIndexFromServer();//get index in server's client array
         }
         else {
             portableShutdown(connectSockets.at(i));
@@ -71,6 +70,7 @@ void PortableClient::connectToServer(string ip) {
 void PortableClient::sendToServer(string message) {
     if(getWait() == false) {
         portableSend(serverSocket, message.c_str());
+        cout << "Sent message '" << message << "' to server\n";
         setWait(true);
     }
 }
@@ -97,6 +97,9 @@ string PortableClient::readMsgBuffer(int msgLenght, char* recvbuf) {
         cout << "error, client received message with negative lenght";
         exit(0);
     }
+    if(msg.compare(lastMessage) != 0) {
+        cout << "Received message '" << lastMessage << "' from server\n";
+    }
     return msg;
 }
 
@@ -108,7 +111,6 @@ void PortableClient::receiveMultithreaded() {
         char recvbuf[recvbuflen];
         int msgLenght = portableRecv(serverSocket, recvbuf);
         lastMessage = readMsgBuffer(msgLenght, recvbuf);
-
         this_thread::sleep_for(chrono::milliseconds(1));
     }
     portableShutdown(serverSocket);

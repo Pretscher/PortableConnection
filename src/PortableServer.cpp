@@ -15,6 +15,7 @@ void PortableServer::waitForClient() {
 void PortableServer::sendToClient(int clientIndex, string message) {
     if(wait[clientIndex] == false) {
         int iResult = portableSend(clientSockets[clientIndex], message.c_str());
+        cout << "Sent message '" << message << "' to client " << clientIndex << "\n";
         wait[clientIndex] = true;
     }
 }
@@ -46,6 +47,8 @@ void PortableServer::receiveMultithreaded(int clientIndex) {
             wait[clientIndex] = false;
             //connection setup
             this->respondToCommands(clientIndex);
+
+            cout << "Received message '" << lastMessages[clientIndex] << "' from client " << clientIndex << "\n";
             mtx->unlock();
         }
 

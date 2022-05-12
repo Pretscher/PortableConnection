@@ -153,7 +153,7 @@ private:
     PortableClient(PortableClient& copy) {
 
     }
-    void getMyIndex();
+    void getMyIndexFromServer();
     string readMsgBuffer(int msgLenght, char recvbuf[]);
     string receiveMessage();
 

@@ -3,6 +3,7 @@
     "files.associations": {
         "iostream": "cpp",
         "chrono": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "system_error": "cpp"
     }
 }
