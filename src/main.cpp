@@ -10,7 +10,7 @@ void initConnection(bool isServer) {
         server.waitForClient();
     } else {
         PortableClient client;
-        client.searchHosts();
+        client.searchHosts(500);
         vector<string> avHosts = client.getAvailableHosts();
         cout << "Please choose your host by index from the following list:\n";
         for (unsigned int i = 0; i < avHosts.size(); i++) {
@@ -19,7 +19,7 @@ void initConnection(bool isServer) {
         string chosenIndex;
         cin >> chosenIndex;
         int chosenIndexInt = stoi(chosenIndex);
-        if(chosenIndexInt > avHosts.size()) {
+        if(chosenIndexInt >= avHosts.size()) {
             cout << "Index invalid.\n";
             exit(0);
         }
@@ -28,10 +28,11 @@ void initConnection(bool isServer) {
 }
 
 int main() {
-    bool isServer = true;
-    thread networking(&initConnection, isServer);
+    bool isServer = false;
+    initConnection(isServer);
+    //thread networking(&initConnection, isServer);
     while(true){
-        
+
     }
     return 0;
 }
