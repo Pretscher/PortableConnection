@@ -36,7 +36,8 @@ void PortableServer::receiveMultithreaded(int clientIndex) {
         int iResult = portableRecv(clientSockets[clientIndex], recvBuffer);
         //save message
         if(iResult > 0) {
-            mtx->lock();//lock caus writing and reading message at the same time is not thread safe
+            lastMsgMtx.lock();//lock caus writing and reading message at the same time is not thread safe
+
             lastMessages[clientIndex].clear();
             gotNewMessage[clientIndex] = true;
             //save message
@@ -46,10 +47,10 @@ void PortableServer::receiveMultithreaded(int clientIndex) {
             delete[] recvBuffer;
             wait[clientIndex] = false;
             //connection setup
+            cout << "Received message '" << lastMessages[clientIndex] << "' from client " << clientIndex << "\n";
             this->respondToCommands(clientIndex);
 
-            cout << "Received message '" << lastMessages[clientIndex] << "' from client " << clientIndex << "\n";
-            mtx->unlock();
+            lastMsgMtx.unlock();
         }
 
         if(iResult < 0) {
@@ -83,12 +84,11 @@ void PortableServer::respondToCommands(int clientIndex) {
     }
 }
 
-vector<string> PortableServer::getLastMessages() const {
-    return lastMessages;
-}
-
-shared_ptr<mutex> PortableServer::getMutex() const {
-    return mtx;
+vector<string> PortableServer::getLastMessages() {
+    lastMsgMtx.lock();
+    vector<string> temp = lastMessages;//copy
+    lastMsgMtx.unlock();
+    return temp;
 }
 
 /**

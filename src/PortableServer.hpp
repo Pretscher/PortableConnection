@@ -40,8 +40,7 @@ public:
     void receiveMultithreaded(int i);
     void sendToClient(int index, string message);
 
-    vector<string> getLastMessages() const;
-    shared_ptr<mutex> getMutex() const;
+    vector<string> getLastMessages();
     bool newMessage(int index);
 
     string getIP() const;
@@ -97,15 +96,18 @@ private:
     void respondToCommands(int index);
     string port = "8080";
     int recvbuflen = 512;
-
     vector<string> lastMessages;
-
     bool connected = false;
-
     mutex connectedMtx;
-
     vector<mutex> waitMutices;
     vector<bool> wait;
     vector<bool> gotNewMessage;
-    shared_ptr<mutex> mtx = shared_ptr<mutex>(new mutex());
+
+    string getLastMessage(int clientIndex) {
+        lastMsgMtx.lock();
+        string temp = lastMessages[clientIndex];
+        lastMsgMtx.unlock();
+        return temp;
+    }
+    mutex lastMsgMtx;
 };
