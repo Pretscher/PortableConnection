@@ -111,6 +111,38 @@ private:
     int portableRecv(SOCKET socket, char* recvBuffer);
     void portableShutdown(SOCKET socket);
 #endif
+
+
+//There should be a public way to get the last message from a client, but only the server should be able to set the last message
+public:
+    /**
+     * @brief Threadsafely Get the Last Message From Client object
+     * 
+     * @param clientIndex 
+     * @return string 
+     */
+    inline string getLastMessageFromClient(int clientIndex) {
+        lastMessageMutices[clientIndex].lock();
+        string temp = lastMessages[clientIndex];
+        lastMessageMutices[clientIndex].unlock();
+        return temp;
+    }
+private:
+    vector<mutex> lastMessageMutices;
+    vector<string> lastMessages;
+    /**
+     * @brief Threadsafely set the last message received from a client
+     * 
+     * @param clientIndex 
+     * @param newMessage 
+     */
+    inline void setLastMessage(int clientIndex, string newMessage) {
+        lastMessageMutices[clientIndex].lock();
+        lastMessages[clientIndex] = newMessage;
+        lastMessageMutices[clientIndex].unlock();
+    }
+
+
     /**
      * @brief reads the last message from a client and, if it was a command defined in this function, responds accordingly
      *
@@ -119,18 +151,11 @@ private:
     void respondToCommands(int index);
     string port = "8080";
     int recvbuflen = 512;
-    vector<string> lastMessages;
+
     bool connected = false;
     mutex connectedMtx;
     vector<mutex> waitMutices;
     vector<bool> wait;
     vector<bool> gotNewMessage;
 
-    string getLastMessage(int clientIndex) {
-        lastMsgMtx.lock();
-        string temp = lastMessages[clientIndex];
-        lastMsgMtx.unlock();
-        return temp;
-    }
-    mutex lastMsgMtx;
 };

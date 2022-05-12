@@ -34,7 +34,7 @@ void initConnection(bool isServer) {
 
 int main() {
     bool isServer = false;
-    thread networking(&initConnection, isServer);
+    initConnection(isServer);
     while(true){
 
     }

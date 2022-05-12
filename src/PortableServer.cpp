@@ -25,21 +25,18 @@ void PortableServer::receiveMultithreaded(int clientIndex) {
         int iResult = portableRecv(clientSockets[clientIndex], recvBuffer);
         //save message
         if(iResult > 0) {
-            lastMsgMtx.lock();//lock caus writing and reading message at the same time is not thread safe
-
-            lastMessages[clientIndex].clear();
             gotNewMessage[clientIndex] = true;
             //save message
+            string newMsg;
             for(int j = 0; j < iResult; j++) {
-                lastMessages[clientIndex].push_back(recvBuffer[j]);
+                newMsg.push_back(recvBuffer[j]);
             }
             delete[] recvBuffer;
+            setLastMessage(clientIndex, newMsg);
             wait[clientIndex] = false;
             //connection setup
-            if(loggingEnabled == true) cout << "Received message '" << lastMessages[clientIndex] << "' from client " << clientIndex << "\n";
+            if(loggingEnabled == true) cout << "Received message '" << getLastMessageFromClient(clientIndex) << "' from client " << clientIndex << "\n";
             this->respondToCommands(clientIndex);
-
-            lastMsgMtx.unlock();
         }
 
         if(iResult < 0) {
@@ -52,28 +49,25 @@ void PortableServer::receiveMultithreaded(int clientIndex) {
 
 void PortableServer::respondToCommands(int clientIndex) {
     bool isCommand = false;//commands should not be used by handlers so we clear them at the end
-    lastMsgMtx.lock();
-    if(lastMessages[clientIndex].compare("12345") == 0) {
+    string lastMessage = getLastMessageFromClient(clientIndex);
+    if(lastMessage.compare("12345") == 0) {
         sendToClient(clientIndex, "12345");//sets wait to false
         isCommand = true;
     }
-    if(lastMessages[clientIndex].compare("getMyClientIndex") == 0) {
+    if(lastMessage.compare("getMyClientIndex") == 0) {
         sendToClient(clientIndex, to_string(this->clientSockets.size() - 1));//sets wait to false
         isCommand = true;
     }
 
     if(isCommand == true) {
-        lastMessages[clientIndex].clear();
+        lastMessage.clear();
         gotNewMessage[clientIndex] = false;
         wait[clientIndex] = true;
     }
-    lastMsgMtx.unlock();
 }
 
 vector<string> PortableServer::getLastMessages() {
-    lastMsgMtx.lock();
     vector<string> temp = lastMessages;//copy
-    lastMsgMtx.unlock();
     return temp;
 }
 
@@ -137,7 +131,7 @@ void PortableServer::portableConnect() {
     connectedMtx.lock();
     wait.push_back(false);
     gotNewMessage.push_back(false);
-    lastMessages.push_back(string());
+    lastMessages.push_back(string());//this is thread safe because there is no way this will be used instantly
     connectedMtx.unlock();
 #ifdef __linux__ 
 
