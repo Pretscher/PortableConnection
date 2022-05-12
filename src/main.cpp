@@ -4,14 +4,18 @@
 #include <thread>
 using namespace std;
 
+//Those two are outside of func because if those classes are destroyed, the threads are destroyed, which will crash the program. 
+//Could edit destructor but i can't be bothered.
+PortableServer* server;
+PortableClient* client;
 void initConnection(bool isServer) {
     if(isServer == true) {
-        PortableServer server;
-        server.waitForClient();
+        server = new PortableServer();
+        server->waitForClient();
     } else {
-        PortableClient client;
-        client.searchHosts(1000);
-        vector<string> avHosts = client.getAvailableHosts();
+        client = new PortableClient();
+        client->searchHosts(1000);
+        vector<string> avHosts = client->getAvailableHosts();
         cout << "Please choose your host by index from the following list:\n";
         for (unsigned int i = 0; i < avHosts.size(); i++) {
             cout << "\nHost at index [" << i << "]: " << avHosts[i] << "\n";
@@ -23,7 +27,7 @@ void initConnection(bool isServer) {
             cout << "Index invalid.\n";
             exit(0);
         }
-        client.connectToServer(avHosts[chosenIndexInt]);
+        client->connectToServer(avHosts[chosenIndexInt]);
     }
 }
 

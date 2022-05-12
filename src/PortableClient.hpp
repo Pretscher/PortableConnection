@@ -146,8 +146,9 @@ public:
     */
     inline bool getWait() {
         waitMutex.lock();
-        return wait;
+        bool temp = wait;
         waitMutex.unlock();
+        return wait;
     }
 private:
     PortableClient(PortableClient& copy) {

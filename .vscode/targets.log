@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Thu May 12 13:06:03 2022
+# Make data base, printed on Thu May 12 16:12:30 2022
 
 # Variables
 
@@ -25,7 +25,7 @@ SNAP_INSTANCE_KEY =
 # environment
 GJS_DEBUG_OUTPUT = stderr
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /run/user/1000/vscode-ipc-6080e657-9561-495c-8001-ded9cc758a52.sock
+VSCODE_IPC_HOOK_EXTHOST = /run/user/1000/vscode-ipc-6494dc15-772c-49c0-b852-b7fdd300d07f.sock
 # environment
 LC_NAME = de_DE.UTF-8
 # environment
@@ -105,7 +105,7 @@ SNAP_REEXEC =
 # environment
 VSCODE_VERBOSE_LOGGING = true
 # environment
-VSCODE_PID = 2749
+VSCODE_PID = 34237
 # environment
 XDG_SESSION_TYPE = x11
 # automatic
@@ -215,7 +215,7 @@ MANAGERPID = 1198
 # environment
 LC_MEASUREMENT = de_DE.UTF-8
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 2709
+GIO_LAUNCHED_DESKTOP_FILE_PID = 34198
 # environment
 _ = /snap/code/96/usr/share/code/code
 # environment
@@ -294,11 +294,11 @@ Makefile:
 #  Implicit rule search has been done.
 #  File does not exist.
 #  File has been updated.
+ 
 #  Failed to be updated.
 
 # Not a target:
 .DEFAULT:
- 
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
@@ -338,6 +338,6 @@ GNUmakefile:
 # strcache performance: lookups = 19 / hit rate = 15%
 # hash-table stats:
 # Load=16/8192=0%, Rehash=0, Collisions=0/19=0%
-# Finished Make data base on Thu May 12 13:06:03 2022
+# Finished Make data base on Thu May 12 16:12:30 2022
 
  

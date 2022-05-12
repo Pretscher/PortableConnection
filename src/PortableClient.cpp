@@ -29,6 +29,7 @@ void PortableClient::getMyIndexFromServer() {
     this->sendToServer("getMyClientIndex");
     //receive my clientIndex
     char recvbuf[recvbuflen];
+    std::cout << "Reached\n";
     int msgLen = this->portableRecv(this->serverSocket, recvbuf);
     string myClientIndex = readMsgBuffer(msgLen, recvbuf);
 
@@ -192,6 +193,7 @@ const unsigned int checkedIpCount = 255;
 thread* threads;
 mutex* mutices;
 bool* threadFinished;
+mutex* threadFinishedMtx;
 string foundIP;
 /**
  * @brief Searches for hosts in multiple threads.
@@ -203,6 +205,7 @@ void searchHostsMultiThreaded(PortableClient* client) {
     threads = new thread[checkedIpCount];
     mutices = new mutex[checkedIpCount];
     threadFinished = new bool[checkedIpCount];
+    threadFinishedMtx = new mutex[checkedIpCount];
     foundIP = "";
 
     string myIP = client->getIP();
@@ -232,15 +235,16 @@ void searchHostsMultiThreaded(PortableClient* client) {
         //check if all threads finished searching. If so, end this thread.
         bool finished = true;
         for(int i = 0; i < checkedIpCount; i++) {
+            threadFinishedMtx[i].lock();
             if(threadFinished[i] == false) {
                 finished = false;
             }
+            threadFinishedMtx[i].unlock();
         }
         if(finished == true) {
-            delete[] threads;
-            delete[] mutices;
-            delete[] threadFinished;
-            return;
+            //delete[] threads;
+            //delete[] mutices;
+            //delete[] threadFinished;
         }
     }
 }
@@ -253,8 +257,8 @@ void searchHostsMultiThreaded(PortableClient* client) {
  * @param index
  * @param client
  */
-void testIP(string myIP, int index, PortableClient* client) {
-    threadFinished[index] = false;
+void testIP(string myIP, int myIndex, PortableClient* client) {
+    threadFinished[myIndex] = false;
     bool connectSuccess = false;
     //tempConnectSocket has different data type depending on OS so uhm... this code is awful but it does the job
 #ifdef __linux__ 
@@ -286,7 +290,9 @@ void testIP(string myIP, int index, PortableClient* client) {
             }
         }
     }
-    threadFinished[index] = true;
+    threadFinishedMtx[myIndex].lock();
+    threadFinished[myIndex] = true;
+    threadFinishedMtx[myIndex].unlock();
 }
 
 /**
