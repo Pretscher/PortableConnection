@@ -5,7 +5,6 @@
 using namespace std;
 
 const int recvbuflen = 512;
-
 /**
  * @brief Starts up client(on Windows, not necessary on Linux), does not yet try to connect to a server
  */
@@ -41,7 +40,7 @@ void PortableClient::getMyIndexFromServer() {
  * @param ip
  */
 void PortableClient::connectToServer(string ip) {
-    cout << "CLIENT_SOCKET: Trying to connect to server with ip " << ip << "\n";
+    if(loggingEnabled == true) cout << "CLIENT_SOCKET: Trying to connect to server with ip " << ip << "\n";
     //search for socket matching ip
     avHostsMtx.lock();
     auto copy = avHosts;
@@ -59,7 +58,7 @@ void PortableClient::connectToServer(string ip) {
     connectSockets.clear();
     connectSocketsMtx.unlock();
     setConnected(true);
-    cout << "Client successfully connected to server!\n";
+    if(loggingEnabled == true) cout << "CLIENT_SOCKET: successfully connected to server!\n";
 }
 
 /**
@@ -70,7 +69,7 @@ void PortableClient::connectToServer(string ip) {
 void PortableClient::sendToServer(string message) {
     if(getWait() == false) {
         portableSend(serverSocket, message.c_str());
-        cout << "Sent message '" << message << "' to server\n";
+        if(loggingEnabled == true) cout << "Sent message '" << message << "' to server\n";
         setWait(true);
     }
 }
@@ -97,7 +96,7 @@ string PortableClient::readMsgBuffer(int msgLenght, char* recvbuf) {
     }
 
     if(msg.compare(getLastMessage()) != 0) {
-        cout << "Received message '" << msg << "' from server\n";
+        if(loggingEnabled == true) cout << "Received message '" << msg << "' from server\n";
     }
     return msg;
 }
@@ -115,68 +114,13 @@ void PortableClient::receiveMultithreaded() {
     portableShutdown(serverSocket);
 }
 
-bool PortableClient::isConnected() const {
-    return isConnected();
-}
-
 bool PortableClient::newMessage() {
     bool temp = gotNewMessage;
     gotNewMessage = false;
     return temp;
 }
 
-string PortableClient::getMyIP() const {
-#ifdef __linux__ 
-    struct ifaddrs* ifaddr, * ifa;
-    int family, s;
-    char host[265];
 
-    if(getifaddrs(&ifaddr) == -1)
-    {
-        perror("getifaddrs");
-        exit(EXIT_FAILURE);
-    }
-
-
-    for(ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
-    {
-        if(ifa->ifa_addr == NULL)
-            continue;
-
-        s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, 265, NULL, 0, 1);
-
-        if( /*(strcmp(ifa->ifa_name,"wlan0")==0)&&( */ ifa->ifa_addr->sa_family == AF_INET) // )
-        {
-            if(s != 0)
-            {
-                cout << "getnameinfo() failed: %s\n", gai_strerror(s);
-                exit(EXIT_FAILURE);
-            }
-        }
-    }
-    freeifaddrs(ifaddr);
-    return string(host);
-
-#elif _WIN64
-    char hostname[255];
-    struct hostent* he;
-    struct in_addr** addr_list;
-
-    WSAData data;
-    WSAStartup(MAKEWORD(2, 2), &data);
-
-    gethostname(hostname, 255);
-    if((he = gethostbyname(hostname)) == NULL) {
-        std::cout << "gethostbyname error" << std::endl;
-        return string();
-    }
-    else {
-        addr_list =(struct in_addr**) he->h_addr_list;
-        return string(inet_ntoa(*addr_list[0]));
-    }
-#endif
-
-}
 
 //used by searchHostMultithreaded() and testIP()
 const unsigned int checkedIpCount = 255;
@@ -228,20 +172,24 @@ void searchHostsMultiThreaded(PortableClient* client) {
         for(int i = 1; i < checkedIpCount; i++) {
             threadFinishedMtx[i].lock();
             if(threadFinished[i] == false) {
-                //cout << i << " ";
                 finished = false;
             }
             
             threadFinishedMtx[i].unlock();
         }
         if(finished == true) {
-            cout << "All threads for searching hosts deleted\n";
+            //cout << "All threads for searching hosts deleted\n";
             delete[] threads;
             delete[] mutices;
             delete[] threadFinished;
         }
     }
 }
+
+
+
+//Portable functions used on both operating systems for the above code:--------------------------------------------------------------------
+
 
 
 /**
@@ -389,3 +337,55 @@ SOCKET PortableClient::portableConnect(const char* connectIP) {
     return INVALID_SOCKET;
 }
 #endif
+
+string PortableClient::getMyIP() const {
+#ifdef __linux__ 
+    struct ifaddrs* ifaddr, * ifa;
+    int family, s;
+    char host[265];
+
+    if(getifaddrs(&ifaddr) == -1)
+    {
+        perror("getifaddrs");
+        exit(EXIT_FAILURE);
+    }
+
+
+    for(ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if(ifa->ifa_addr == NULL)
+            continue;
+
+        s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, 265, NULL, 0, 1);
+
+        if( /*(strcmp(ifa->ifa_name,"wlan0")==0)&&( */ ifa->ifa_addr->sa_family == AF_INET) // )
+        {
+            if(s != 0)
+            {
+                cout << "getnameinfo() failed: %s\n", gai_strerror(s);
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+    freeifaddrs(ifaddr);
+    return string(host);
+
+#elif _WIN64
+    char hostname[255];
+    struct hostent* he;
+    struct in_addr** addr_list;
+
+    WSAData data;
+    WSAStartup(MAKEWORD(2, 2), &data);
+
+    gethostname(hostname, 255);
+    if((he = gethostbyname(hostname)) == NULL) {
+        std::cout << "gethostbyname error" << std::endl;
+        return string();
+    }
+    else {
+        addr_list =(struct in_addr**) he->h_addr_list;
+        return string(inet_ntoa(*addr_list[0]));
+    }
+#endif
+}

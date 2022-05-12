@@ -47,12 +47,8 @@ using namespace std;
 class PortableClient {
 public:
     int myPlayerIndex;
-
     PortableClient();
-
     void sendToServer(string message);
-
-    bool isConnected() const;
     shared_ptr<mutex> getMutex() const;
     bool newMessage();
 
@@ -165,6 +161,7 @@ public:
         waitMutex.unlock();
         return wait;
     }
+    bool loggingEnabled = true;
 private:
     PortableClient(PortableClient& copy) {
     }
@@ -228,7 +225,18 @@ private:
         connected = c;
         connectedMtx.unlock();
     }
-
+    /**
+     * @brief Threadsafe way to check if the client is connected to a server
+     * 
+     * @return true 
+     * @return false 
+     */
+    bool isConnected() {
+        connectedMtx.lock();
+        bool temp = connected;
+        connectedMtx.unlock();
+        return temp;
+    }
     
     thread searchingHosts;
 

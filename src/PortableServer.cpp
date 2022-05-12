@@ -6,25 +6,14 @@ void PortableServer::waitForClient() {
     portableConnect();//listen for clients
 }
 
-/**
- * @brief Sends a message to a client. Cannot be done twice in a row without the client responding in between
- *
- * @param clientIndex
- * @param message
- */
 void PortableServer::sendToClient(int clientIndex, string message) {
     if(wait[clientIndex] == false) {
         int iResult = portableSend(clientSockets[clientIndex], message.c_str());
-        cout << "Sent message '" << message << "' to client " << clientIndex << "\n";
+        if(loggingEnabled == true) cout << "Sent message '" << message << "' to client " << clientIndex << "\n";
         wait[clientIndex] = true;
     }
 }
 
-/**
- * @brief Waits for messages from a client. Has to be done in a seperate thread.
- *
- * @param clientIndex
- */
 void PortableServer::receiveMultithreaded(int clientIndex) {
     // Receive until the peer shuts down the connection
     while(true) {
@@ -47,25 +36,20 @@ void PortableServer::receiveMultithreaded(int clientIndex) {
             delete[] recvBuffer;
             wait[clientIndex] = false;
             //connection setup
-            cout << "Received message '" << lastMessages[clientIndex] << "' from client " << clientIndex << "\n";
+            if(loggingEnabled == true) cout << "Received message '" << lastMessages[clientIndex] << "' from client " << clientIndex << "\n";
             this->respondToCommands(clientIndex);
 
             lastMsgMtx.unlock();
         }
 
         if(iResult < 0) {
-            cout << "Lost connection to client.";
+            if(loggingEnabled == true) cout << "Lost connection to client.";
             portableShutdown(clientSockets[clientIndex]);
             return;
         }
     }
 }
 
-/**
- * @brief reads the last message from a client and, if it was a command defined in this function, responds accordingly
- *
- * @param clientIndex
- */
 void PortableServer::respondToCommands(int clientIndex) {
     bool isCommand = false;//commands should not be used by handlers so we clear them at the end
     lastMsgMtx.lock();
@@ -93,78 +77,13 @@ vector<string> PortableServer::getLastMessages() {
     return temp;
 }
 
-/**
- * @brief Checks if there is a new message from this client, since this method was last called
- *
- * @param clientIndex
- * @return true There is a new message since this method was last called
- * @return false There is no new message since this method was last called
- */
+
+//Portable functions used by the above code:------------------------------------------------------------------------------------------------
+
 bool PortableServer::newMessage(int clientIndex) {
     bool temp = gotNewMessage[clientIndex];
     gotNewMessage[clientIndex] = false;
     return temp;
-}
-
-/**
- * @brief Gets the IP4-Adress of the machine this code is executed on
- *
- * @return string
- */
-string PortableServer::getIP() const {
-#ifdef __linux__ 
-
-    struct ifaddrs* ifaddr, * ifa;
-    int family, s;
-    char host[265];
-
-    if(getifaddrs(&ifaddr) == -1)
-    {
-        perror("getifaddrs");
-        exit(EXIT_FAILURE);
-    }
-
-
-    for(ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
-    {
-        if(ifa->ifa_addr == NULL)
-            continue;
-
-        s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, 265, NULL, 0, 1);
-
-        if( /*(strcmp(ifa->ifa_name,"wlan0")==0)&&( */ ifa->ifa_addr->sa_family == AF_INET) // )
-        {
-            if(s != 0)
-            {
-                cout << "getnameinfo() failed: " << gai_strerror(s) << "\n";
-                exit(EXIT_FAILURE);
-            }
-            cout << "\tInterface : <" << ifa->ifa_name << ">\n";
-            cout << "\t  Address : <" << host << ">\n";
-        }
-    }
-    freeifaddrs(ifaddr);
-    return string(host);
-#elif _WIN64
-    char hostname[255];
-    struct hostent* he;
-    struct in_addr** addr_list;
-
-    WSAData data;
-    WSAStartup(MAKEWORD(2, 2), &data);
-
-    gethostname(hostname, 255);
-
-    if((he = gethostbyname(hostname)) == NULL) {
-        std::cout << "gethostbyname error" << std::endl;
-        return string();
-    }
-    else {
-        addr_list =(struct in_addr**) he->h_addr_list;
-        return string(inet_ntoa(*addr_list[0]));
-    }
-    return string();
-#endif
 }
 
 #ifdef __linux__ 
@@ -200,6 +119,7 @@ int PortableServer::portableRecv(SOCKET socket, char* recvBuffer) {
 #endif
 
 
+//Server setup---------------------------------------------------------------------------------------------------------------------------
 
 
 /**
@@ -350,5 +270,67 @@ void PortableServer::portableConnect() {
     connectedMtx.unlock();
 
     this->receiveMultithreaded(connectThreads.size() - 1);
+#endif
+}
+
+
+/**
+ * @brief Gets the IP4-Adress of the machine this code is executed on
+ *
+ * @return string
+ */
+string PortableServer::getIP() const {
+#ifdef __linux__ 
+
+    struct ifaddrs* ifaddr, * ifa;
+    int family, s;
+    char host[265];
+
+    if(getifaddrs(&ifaddr) == -1)
+    {
+        perror("getifaddrs");
+        exit(EXIT_FAILURE);
+    }
+
+
+    for(ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if(ifa->ifa_addr == NULL)
+            continue;
+
+        s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, 265, NULL, 0, 1);
+
+        if( /*(strcmp(ifa->ifa_name,"wlan0")==0)&&( */ ifa->ifa_addr->sa_family == AF_INET) // )
+        {
+            if(s != 0)
+            {
+                cout << "getnameinfo() failed: " << gai_strerror(s) << "\n";
+                exit(EXIT_FAILURE);
+            }
+            cout << "\tInterface : <" << ifa->ifa_name << ">\n";
+            cout << "\t  Address : <" << host << ">\n";
+        }
+    }
+    freeifaddrs(ifaddr);
+    return string(host);
+#elif _WIN64
+    char hostname[255];
+    struct hostent* he;
+    struct in_addr** addr_list;
+
+    WSAData data;
+    WSAStartup(MAKEWORD(2, 2), &data);
+
+    gethostname(hostname, 255);
+
+    if((he = gethostbyname(hostname)) == NULL) {
+        std::cout << "gethostbyname error" << std::endl;
+        return string();
+    }
+    else {
+        addr_list =(struct in_addr**) he->h_addr_list;
+        return string(inet_ntoa(*addr_list[0]));
+    }
+    return string();
 #endif
 }

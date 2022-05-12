@@ -36,11 +36,28 @@ public:
 
     }
     void waitForClient();
-
+    /**
+    * @brief Waits for messages from a client. Has to be done in a seperate thread.
+    *
+    * @param clientIndex
+    */
     void receiveMultithreaded(int i);
+    /**
+     * @brief Sends a message to a client. Cannot be done twice in a row without the client responding in between
+    *
+    * @param clientIndex
+    * @param message
+    */
     void sendToClient(int index, string message);
 
     vector<string> getLastMessages();
+    /**
+    * @brief Checks if there is a new message from this client, since this method was last called
+    *
+    * @param clientIndex
+    * @return true There is a new message since this method was last called
+    * @return false There is no new message since this method was last called
+    */
     bool newMessage(int index);
 
     string getIP() const;
@@ -75,11 +92,12 @@ public:
         waitMutices[clientIndex].unlock();
     }
 
+    bool loggingEnabled = true;
 private:
     PortableServer(PortableServer& copy) {
 
     }
-#ifdef  __linux__ 
+#ifdef  __linux__
     int addrlen;
     vector<int> clientSockets;
     struct sockaddr_in address;
@@ -93,6 +111,11 @@ private:
     int portableRecv(SOCKET socket, char* recvBuffer);
     void portableShutdown(SOCKET socket);
 #endif
+    /**
+     * @brief reads the last message from a client and, if it was a command defined in this function, responds accordingly
+     *
+     * @param clientIndex
+     */
     void respondToCommands(int index);
     string port = "8080";
     int recvbuflen = 512;
