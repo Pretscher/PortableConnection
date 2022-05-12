@@ -84,7 +84,7 @@ void PortableClient::sendToServer(string message) {
 string PortableClient::readMsgBuffer(int msgLenght, char* recvbuf) {
     string msg = string();
     if(msgLenght > 0) {
-        gotNewMessage = true;
+        setGotNewMessage(true);
         //save message
         for(int i = 0; i < msgLenght; i++) {
             msg.push_back(recvbuf[i]);
@@ -115,11 +115,10 @@ void PortableClient::receiveMultithreaded() {
 }
 
 bool PortableClient::newMessage() {
-    bool temp = gotNewMessage;
-    gotNewMessage = false;
+    bool temp = hasNewMessage();
+    setGotNewMessage(false);
     return temp;
 }
-
 
 
 //used by searchHostMultithreaded() and testIP()

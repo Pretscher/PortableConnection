@@ -4,6 +4,7 @@
         "iostream": "cpp",
         "chrono": "cpp",
         "vector": "cpp",
-        "system_error": "cpp"
+        "system_error": "cpp",
+        "mutex": "cpp"
     }
 }

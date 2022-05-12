@@ -25,7 +25,7 @@ void PortableServer::receiveMultithreaded(int clientIndex) {
         int iResult = portableRecv(clientSockets[clientIndex], recvBuffer);
         //save message
         if(iResult > 0) {
-            gotNewMessage[clientIndex] = true;
+            setGotNewMessage(clientIndex, true);
             //save message
             string newMsg;
             for(int j = 0; j < iResult; j++) {
@@ -61,7 +61,7 @@ void PortableServer::respondToCommands(int clientIndex) {
 
     if(isCommand == true) {
         lastMessage.clear();
-        gotNewMessage[clientIndex] = false;
+        setGotNewMessage(clientIndex, false);
         wait[clientIndex] = true;
     }
 }
@@ -75,8 +75,8 @@ vector<string> PortableServer::getLastMessages() {
 //Portable functions used by the above code:------------------------------------------------------------------------------------------------
 
 bool PortableServer::newMessage(int clientIndex) {
-    bool temp = gotNewMessage[clientIndex];
-    gotNewMessage[clientIndex] = false;
+    bool temp = hasNewMessage(clientIndex);
+    setGotNewMessage(clientIndex, false);
     return temp;
 }
 
@@ -130,8 +130,17 @@ vector<thread> connectThreads;
 void PortableServer::portableConnect() {
     connectedMtx.lock();
     wait.push_back(false);
+    lastMessageMutices.push_back(mutex());
+    gotNewMessageMutices.push_back(mutex());
+
+    lastMessageMutices[lastMessageMutices.size() - 1].lock();
+    lastMessages.push_back(string());
+    lastMessageMutices[lastMessageMutices.size() - 1].unlock();
+
+    gotNewMessageMutices[gotNewMessageMutices.size() - 1].lock();
     gotNewMessage.push_back(false);
-    lastMessages.push_back(string());//this is thread safe because there is no way this will be used instantly
+    gotNewMessageMutices[gotNewMessageMutices.size() - 1].unlock();
+
     connectedMtx.unlock();
 #ifdef __linux__ 
 

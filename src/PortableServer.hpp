@@ -116,7 +116,7 @@ private:
 //There should be a public way to get the last message from a client, but only the server should be able to set the last message
 public:
     /**
-     * @brief Threadsafely Get the Last Message From Client object
+     * @brief Threadsafely Get the Last Message
      * 
      * @param clientIndex 
      * @return string 
@@ -127,9 +127,23 @@ public:
         lastMessageMutices[clientIndex].unlock();
         return temp;
     }
+    /**
+     * @brief Threadsafely Get if the message is new
+     * 
+     * @param clientIndex 
+     * @return bool 
+     */
+    inline bool hasNewMessage(int clientIndex) {
+        gotNewMessageMutices[clientIndex].lock();
+        bool temp = gotNewMessage[clientIndex];
+        gotNewMessageMutices[clientIndex].unlock();
+        return temp;
+    }
 private:
     vector<mutex> lastMessageMutices;
+    vector<mutex> gotNewMessageMutices;
     vector<string> lastMessages;
+    vector<bool> gotNewMessage;
     /**
      * @brief Threadsafely set the last message received from a client
      * 
@@ -140,6 +154,12 @@ private:
         lastMessageMutices[clientIndex].lock();
         lastMessages[clientIndex] = newMessage;
         lastMessageMutices[clientIndex].unlock();
+    }
+
+    inline void setGotNewMessage(int clientIndex, bool isNew) {
+        gotNewMessageMutices[clientIndex].lock();
+        gotNewMessage[clientIndex] = isNew;
+        gotNewMessageMutices[clientIndex].unlock();
     }
 
 
@@ -156,6 +176,6 @@ private:
     mutex connectedMtx;
     vector<mutex> waitMutices;
     vector<bool> wait;
-    vector<bool> gotNewMessage;
+
 
 };

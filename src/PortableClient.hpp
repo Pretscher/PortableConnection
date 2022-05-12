@@ -204,8 +204,10 @@ private:
     string receiveMessage();
 
     string port = "8080";
-    string lastMessage;
-    mutex lastMsgMtx;
+
+
+
+public:
     /**
      * @brief Threadsafe way to get lastMessage
      * 
@@ -218,6 +220,22 @@ private:
         return temp;
     }
     /**
+     * @brief Threadsafe way to see if this client has a new message from its server
+     * 
+     * @return true 
+     * @return false 
+     */
+    inline bool hasNewMessage(){
+        lastMsgMtx.lock();
+        bool temp = gotNewMessage;
+        lastMsgMtx.unlock();
+        return temp;
+    }
+private:
+    string lastMessage;
+    mutex lastMsgMtx;
+    mutex gotNewMessageMutex;
+    /**
      * @brief Threadsafe way to set LastMessage
      * 
      * @param message 
@@ -227,6 +245,18 @@ private:
         lastMessage = message;
         lastMsgMtx.unlock();
     }
+    /**
+     * @brief Threadsafe way to set if the client has a new message from its server
+     * 
+     * @param clientIndex 
+     * @param isNew 
+     */
+    inline void setGotNewMessage(bool isNew) {
+        gotNewMessageMutex.lock();
+        gotNewMessage = isNew;
+        gotNewMessageMutex.unlock();
+    }
+
 
     bool connected = false;
 
