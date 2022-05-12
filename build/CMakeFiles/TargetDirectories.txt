@@ -1,3 +1,0 @@
-/home/allah/Desktop/Vscode-Workspace/PortableConnection/build/CMakeFiles/PortableConnection.dir
-/home/allah/Desktop/Vscode-Workspace/PortableConnection/build/CMakeFiles/edit_cache.dir
-/home/allah/Desktop/Vscode-Workspace/PortableConnection/build/CMakeFiles/rebuild_cache.dir

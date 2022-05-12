@@ -1,1 +1,0 @@
-/usr/bin/g++ -g -rdynamic CMakeFiles/PortableConnection.dir/src/PortableClient.cpp.o CMakeFiles/PortableConnection.dir/src/PortableServer.cpp.o CMakeFiles/PortableConnection.dir/src/main.cpp.o -o PortableConnection  -pthread 
