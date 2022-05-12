@@ -5,7 +5,7 @@
 using namespace std;
 
 const int recvbuflen = 512;
-shared_ptr<mutex> mtx = shared_ptr<mutex>(new mutex());
+
 /**
  * @brief Starts up client(on Windows, not necessary on Linux), does not yet try to connect to a server
  */
@@ -29,7 +29,6 @@ void PortableClient::getMyIndexFromServer() {
     this->sendToServer("getMyClientIndex");
     //receive my clientIndex
     char recvbuf[recvbuflen];
-    std::cout << "Reached\n";
     int msgLen = this->portableRecv(this->serverSocket, recvbuf);
     string myClientIndex = readMsgBuffer(msgLen, recvbuf);
 
@@ -86,20 +85,19 @@ void PortableClient::sendToServer(string message) {
 string PortableClient::readMsgBuffer(int msgLenght, char* recvbuf) {
     string msg = string();
     if(msgLenght > 0) {
-        mtx->lock();
         gotNewMessage = true;
         //save message
         for(int i = 0; i < msgLenght; i++) {
             msg.push_back(recvbuf[i]);
         }
-        mtx->unlock();
     }
     if(msgLenght < 0) {
         cout << "error, client received message with negative lenght";
         exit(0);
     }
-    if(msg.compare(lastMessage) != 0) {
-        cout << "Received message '" << lastMessage << "' from server\n";
+
+    if(msg.compare(getLastMessage()) != 0) {
+        cout << "Received message '" << msg << "' from server\n";
     }
     return msg;
 }
@@ -111,18 +109,10 @@ void PortableClient::receiveMultithreaded() {
     while(true) {
         char recvbuf[recvbuflen];
         int msgLenght = portableRecv(serverSocket, recvbuf);
-        lastMessage = readMsgBuffer(msgLenght, recvbuf);
+        setLastMessage(readMsgBuffer(msgLenght, recvbuf));
         this_thread::sleep_for(chrono::milliseconds(1));
     }
     portableShutdown(serverSocket);
-}
-
-string PortableClient::getLastMessage() const {
-    return lastMessage;
-}
-
-shared_ptr<mutex> PortableClient::getMutex() const {
-    return mtx;
 }
 
 bool PortableClient::isConnected() const {
@@ -135,7 +125,7 @@ bool PortableClient::newMessage() {
     return temp;
 }
 
-string PortableClient::getIP() const {
+string PortableClient::getMyIP() const {
 #ifdef __linux__ 
     struct ifaddrs* ifaddr, * ifa;
     int family, s;
@@ -195,12 +185,13 @@ mutex* mutices;
 bool* threadFinished;
 mutex* threadFinishedMtx;
 string foundIP;
-/**
- * @brief Searches for hosts in multiple threads.
- *
- * @param client
- */
 void testIP(string myIP, int index, PortableClient* client);
+
+/**
+ * @brief Searches for local hosts in multiple threads.
+ *
+ * @param client normally just use "this"
+ */
 void searchHostsMultiThreaded(PortableClient* client) {
     threads = new thread[checkedIpCount];
     mutices = new mutex[checkedIpCount];
@@ -208,7 +199,7 @@ void searchHostsMultiThreaded(PortableClient* client) {
     threadFinishedMtx = new mutex[checkedIpCount];
     foundIP = "";
 
-    string myIP = client->getIP();
+    string myIP = client->getMyIP();
     for(int i = 0; i < 2; i++) {
         myIP.pop_back();
     }
@@ -234,17 +225,20 @@ void searchHostsMultiThreaded(PortableClient* client) {
 
         //check if all threads finished searching. If so, end this thread.
         bool finished = true;
-        for(int i = 0; i < checkedIpCount; i++) {
+        for(int i = 1; i < checkedIpCount; i++) {
             threadFinishedMtx[i].lock();
             if(threadFinished[i] == false) {
+                //cout << i << " ";
                 finished = false;
             }
+            
             threadFinishedMtx[i].unlock();
         }
         if(finished == true) {
-            //delete[] threads;
-            //delete[] mutices;
-            //delete[] threadFinished;
+            cout << "All threads for searching hosts deleted\n";
+            delete[] threads;
+            delete[] mutices;
+            delete[] threadFinished;
         }
     }
 }
@@ -270,35 +264,24 @@ void testIP(string myIP, int myIndex, PortableClient* client) {
 #endif
     if(connectSuccess == true) {
         client->portableSend(tempConnectSocket, "12345");
+        char* recvBuf = new char[recvbuflen];
+        int res = client->portableRecv(tempConnectSocket, recvBuf);
+        string msg;
+        //save message
+        for(int i = 0; i < res; i++) {
+            msg.push_back(recvBuf[i]);
+        }
+        delete[] recvBuf;
 
-        long long startTime = std::chrono::system_clock::now().time_since_epoch().count();
-        while(std::chrono::system_clock::now().time_since_epoch().count() - startTime < 200) {
-            this_thread::sleep_for(chrono::milliseconds(5));
-            char* recvBuf = new char[recvbuflen];
-            int res = client->portableRecv(tempConnectSocket, recvBuf);
-            string msg;
-            //save message
-            for(int i = 0; i < res; i++) {
-                msg.push_back(recvBuf[i]);
-            }
-            delete[] recvBuf;
-
-            if(msg.compare("12345") == 0) {
-                client->addConnectSocket(tempConnectSocket);
-                foundIP = myIP;//this will be pushed back to string. 
-                break;//dont set threadFinished to true so that no multithreading error can occur where the filled string is ignored
-            }
+        if(msg.compare("12345") == 0) {
+            client->addConnectSocket(tempConnectSocket);
+            foundIP = myIP;//this will be pushed back to string
         }
     }
     threadFinishedMtx[myIndex].lock();
     threadFinished[myIndex] = true;
     threadFinishedMtx[myIndex].unlock();
 }
-
-/**
- * @brief Searches for hosts in local network that use sockets on this port.
- * @param waitTime Time the algorithm for searching server sockets gets, until it has to return a list of available sockets
- */
 
 void PortableClient::searchHosts(int waitTime) {
     searchingHosts = std::thread(&searchHostsMultiThreaded, this);
@@ -330,17 +313,11 @@ int PortableClient::portableConnect(string connectIP) {
     }
     return -1;
 }
+
 void PortableClient::portableShutdown(int socket) {
     shutdown(socket, SHUT_RDWR);
 }
 
-/**
- * @brief tries to receive a message and write it into the recvBuffer.
- * Will block all action in this thread until message was received or time out
- * @param socket usually the server socket for a client
- * @param recvBuffer
- * @return int <- lenght of the message.
- */
 int PortableClient::portableRecv(int socket, char* recvBuffer) {
     int out = read(socket, recvBuffer, recvbuflen);
     setWait(false);

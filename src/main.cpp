@@ -20,6 +20,7 @@ void initConnection(bool isServer) {
         for (unsigned int i = 0; i < avHosts.size(); i++) {
             cout << "\nHost at index [" << i << "]: " << avHosts[i] << "\n";
         }
+        //let user type the index of the server in the terminal
         string chosenIndex;
         cin >> chosenIndex;
         int chosenIndexInt = stoi(chosenIndex);

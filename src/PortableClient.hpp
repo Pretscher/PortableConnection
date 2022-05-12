@@ -49,17 +49,25 @@ public:
     int myPlayerIndex;
 
     PortableClient();
-    void receiveMultithreaded();
+
     void sendToServer(string message);
 
-    string getLastMessage() const;
     bool isConnected() const;
     shared_ptr<mutex> getMutex() const;
     bool newMessage();
 
-    string getIP() const;
+    /**
+     * @brief Gets the IP of the machine this program is running on
+     * 
+     * @return string 
+     */
+    string getMyIP() const;
 
     void connectToServer(string ip);
+    /**
+    * @brief Searches for hosts in local network that use sockets on this port.
+    * @param waitTime Time the algorithm for searching server sockets gets, until it has to return a list of available sockets
+    */
     void searchHosts(int waitTime);
 
     bool isConnected() {
@@ -88,6 +96,13 @@ public:
     struct sockaddr_in address;
 
     int portableConnect(string connectIP);
+    /**
+    * @brief tries to receive a message and write it into the recvBuffer.
+    * Will block all action in this thread until message was received or time out
+    * @param socket usually the server socket for a client
+    * @param recvBuffer
+    * @return int <- lenght of the message.
+    */
     int portableRecv(int socket, char* recvBuf);
     int portableSend(int socket, string message) const;
     void portableShutdown(int socket);
@@ -152,14 +167,50 @@ public:
     }
 private:
     PortableClient(PortableClient& copy) {
-
     }
+    /**
+     * @brief Internally used method to receive from the server socket in a seperate thread.
+     * 
+     */
+    void receiveMultithreaded();
+    /**
+     * @brief Get the index that this client has in the server's client array
+     */
     void getMyIndexFromServer();
+    /**
+     * @brief Helper method to read from a buffer
+     * 
+     * @param msgLenght 
+     * @param recvbuf 
+     * @return string 
+     */
     string readMsgBuffer(int msgLenght, char recvbuf[]);
     string receiveMessage();
 
     string port = "8080";
     string lastMessage;
+    mutex lastMsgMtx;
+    /**
+     * @brief Threadsafe way to get lastMessage
+     * 
+     * @return string lastMessage
+     */
+    inline string getLastMessage() {
+        lastMsgMtx.lock();
+        string temp = lastMessage;
+        lastMsgMtx.unlock();
+        return temp;
+    }
+    /**
+     * @brief Threadsafe way to set LastMessage
+     * 
+     * @param message 
+     */
+    inline void setLastMessage(string message) {
+        lastMsgMtx.lock();
+        lastMessage = message;
+        lastMsgMtx.unlock();
+    }
 
     bool connected = false;
 

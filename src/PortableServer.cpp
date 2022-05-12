@@ -68,6 +68,7 @@ void PortableServer::receiveMultithreaded(int clientIndex) {
  */
 void PortableServer::respondToCommands(int clientIndex) {
     bool isCommand = false;//commands should not be used by handlers so we clear them at the end
+    lastMsgMtx.lock();
     if(lastMessages[clientIndex].compare("12345") == 0) {
         sendToClient(clientIndex, "12345");//sets wait to false
         isCommand = true;
@@ -82,6 +83,7 @@ void PortableServer::respondToCommands(int clientIndex) {
         gotNewMessage[clientIndex] = false;
         wait[clientIndex] = true;
     }
+    lastMsgMtx.unlock();
 }
 
 vector<string> PortableServer::getLastMessages() {
