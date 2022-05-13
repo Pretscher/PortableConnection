@@ -116,7 +116,8 @@ void searchHostsMultiThreaded(PortableClient* client) {
             threadFinishedMtx[i].unlock();
         }
         if(finished == true) {
-            cout << "All threads for searching hosts deleted\n";
+            cout << "All threads for searching hosts deleted. Trying to free memory: \n";
+            this_thread::sleep_for(1000ms);
             delete[] threads;
             delete[] mutices;
             delete[] threadFinished;

@@ -131,10 +131,10 @@ void Socket::receiveNextMessage(int socketIndex) {
         setWait(socketIndex, false);//will be set to true again if this message is a command
     }
     string newMsg = readMsgBuffer(msgLenght, recvBuffer);
-    setLastMessage(socketIndex, newMsg);
     if(loggingEnabled == true && newMsg.compare(getLastMessage(socketIndex)) != 0) {
         cout << "Received message '" << newMsg << "' from socket " << socketIndex << "\n";
     }
+    setLastMessage(socketIndex, newMsg);
 }
 
 bool Socket::newMessage(int socketIndex) {
