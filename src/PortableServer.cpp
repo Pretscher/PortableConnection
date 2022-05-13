@@ -15,13 +15,16 @@ void PortableServer::waitForClient() {
 }
 
 void PortableServer::respondToCommands(int clientIndex) {
+
     bool isCommand = false;//commands should not be used by handlers so we clear them at the end
-    string lastMessage = getLastMessage(clientIndex);
-    if(lastMessage.compare("12345") == 0) {
+    string lastMsg = getLastMessage(clientIndex);
+    if(loggingEnabled == true) cout << "\nResponding to message: '" << lastMsg << "'\n";
+    if(lastMsg.compare("12345") == 0) {
         sendToSocket(clientIndex, "12345");//sets wait to false
         isCommand = true;
     }
-    if(lastMessage.compare("getMyClientIndex") == 0) {
+
+    if(lastMsg.compare("getMyClientIndex") == 0) {
         socketMtx.lock();
         int newSocketIndex = this->sockets.size() - 1;
         socketMtx.unlock();
@@ -31,7 +34,9 @@ void PortableServer::respondToCommands(int clientIndex) {
     }
 
     if(isCommand == true) {
-        lastMessage.clear();
+        //if the last message was a command, it is not relevant for the rest of the program.
+        //thus set "gotNewMessage" (used by the rest of the program) to false.
+        setLastMessage(clientIndex, string());
         setGotNewMessage(clientIndex, false);
         setWait(clientIndex, true);
     }
@@ -109,9 +114,9 @@ void PortableServer::portableConnect() {
     shutdown(listenSocket, SHUT_RDWR);
 
     addSocket(tempClientSocket);
+    startEventloop(connectThreads.size());
     connectThreads.push_back(thread(&listenForNextClient, this));
 
-    startEventloop(connectThreads.size() - 1);
 #elif _WIN64
     WSADATA wsaData;
     SOCKET listenSocket = INVALID_SOCKET;

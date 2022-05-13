@@ -34,7 +34,7 @@ void initConnection(bool isServer) {
 }
 
 int main() {
-    bool isServer = false;
+    bool isServer = true;
     initConnection(isServer);
     while(true){
 

@@ -126,9 +126,12 @@ string Socket::readMsgBuffer(int msgLenght, char* recvbuf) {
 void Socket::receiveNextMessage(int socketIndex) {
     char* recvBuffer = new char[recvbuflen];
     int msgLenght = portableRecv(getSocket(socketIndex), recvBuffer);
-    if(msgLenght > 0) setGotNewMessage(socketIndex, true);
+    if(msgLenght > 0) {
+        setGotNewMessage(socketIndex, true);
+        setWait(socketIndex, false);//will be set to true again if this message is a command
+    }
     string newMsg = readMsgBuffer(msgLenght, recvBuffer);
-
+    setLastMessage(socketIndex, newMsg);
     if(loggingEnabled == true && newMsg.compare(getLastMessage(socketIndex)) != 0) {
         cout << "Received message '" << newMsg << "' from socket " << socketIndex << "\n";
     }
