@@ -123,7 +123,7 @@ string Socket::readMsgBuffer(int msgLenght, char* recvbuf) {
     return msg;
 }
 
-void Socket::receiveNextMessage(int socketIndex) {
+string Socket::receiveNextMessage(int socketIndex) {
     char* recvBuffer = new char[recvbuflen];
     int msgLenght = portableRecv(getSocket(socketIndex), recvBuffer);
     if(msgLenght > 0) {
@@ -134,7 +134,7 @@ void Socket::receiveNextMessage(int socketIndex) {
     if(loggingEnabled == true && newMsg.compare(getLastMessage(socketIndex)) != 0) {
         cout << "Received message '" << newMsg << "' from socket " << socketIndex << "\n";
     }
-    setLastMessage(socketIndex, newMsg);
+    return newMsg;
 }
 
 bool Socket::newMessage(int socketIndex) {

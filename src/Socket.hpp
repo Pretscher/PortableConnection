@@ -50,7 +50,12 @@ public:
 
     vector<string> getLastMessages();
     /**
-    * @brief Sends a message to a client. Cannot be done twice in a row without the client responding in between
+    * @brief If the socket was added to the socket array, this higher-level function can be used
+    * to send a message to a socket.
+    * If logging is enabled, it prints the message. 
+    * ONLY SENDS IF WAIT STATUS IS FALSE (a message was received through 
+    * "string receiveNextMessage(int socketIndex)" after the last call of this message) 
+    * Changes the wait status to true (After sending a message, you should receive a message first).
     *
     * @param socketIndex
     * @param message
@@ -58,12 +63,14 @@ public:
     void sendToSocket(int socketIndex, string message);
 
     /**
-    * @brief Waits for messages from a client till a message is received or a timeout. 
-    * Pushes new message back into "LastMessage[socketIndex]"
+    * @brief If the socket was added to the socket array, this higher-level function can be used
+    * to receive the next message from a socket. 
+    * If logging is enabled, it prints the message. 
+    * Changes the wait status to false (After receiving a message, you should be able to send).
     *
-    * @param socketIndex
+    * @param socketIndex Index in the Socket array (NOT ID)
     */
-    void receiveNextMessage(int socketIndex);
+    string receiveNextMessage(int socketIndex);
 
     /**
      * @brief Threadsafely Get the Last Message
@@ -151,7 +158,21 @@ protected:
     vector<int> sockets;
     struct sockaddr_in address;
 public:
+    /**
+     * @brief Very raw way to send a message to a socket. Only works with the socket's ID, not it's Index. 
+     * 
+     * @param socket Internal Socket ID
+     * @param message 
+     * @return int: error code
+     */
     int portableSend(int socket, const char* message) const;
+    /**
+     * @brief Very raw way to receive a message from a socket. Only works with the socket's ID, not it's Index. 
+     * 
+     * @param socket Internal Socket ID
+     * @param recvBuffer Message will be written into this buffer
+     * @return int: message lenght
+     */
     int portableRecv(int socket, char* recvBuffer);
     void portableShutdown(int socket);
 protected:

@@ -5,7 +5,7 @@ using namespace std;
 void PortableServer::startEventloop(int clientIndex) {
     while(true) {
         this_thread::sleep_for(chrono::milliseconds(1));
-        receiveNextMessage(clientIndex);
+        setLastMessage(clientIndex, receiveNextMessage(clientIndex));
         respondToCommands(clientIndex);
     }
 }

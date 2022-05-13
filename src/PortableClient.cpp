@@ -26,12 +26,7 @@ PortableClient::PortableClient() : Socket() {
  */
 void PortableClient::getMyIndexFromServer(int serverIndex) {
     sendToSocket(serverIndex, "getMyClientIndex");
-    //receive my clientIndex
-    char recvbuf[recvbuflen];
-    
-    int msgLen = portableRecv(getSocket(serverIndex), recvbuf);
-    string myClientIndex = readMsgBuffer(msgLen, recvbuf);
-
+    string myClientIndex = receiveNextMessage(serverIndex);
     myClientIndex[serverIndex] = std::stoi(myClientIndex);
 }
 
