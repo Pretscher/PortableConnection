@@ -4,7 +4,8 @@
 #include <thread>
 using namespace std;
 
-//Those two are outside of func because if those classes are destroyed, the threads are destroyed, which will crash the program. 
+//Those two are outside of func because if those classes are destroyed, 
+//the threads are destroyed, which will crash the program. 
 //Could edit destructor but i can't be bothered.
 PortableServer* server;
 PortableClient* client;

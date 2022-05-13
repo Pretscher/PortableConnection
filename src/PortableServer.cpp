@@ -1,61 +1,24 @@
 #include "PortableServer.hpp"
-#include <thread>
+
 using namespace std;
 
 void PortableServer::waitForClient() {
     portableConnect();//listen for clients
 }
 
-void PortableServer::sendToClient(int clientIndex, string message) {
-    if(getWait(clientIndex) == false) {
-        int iResult = portableSend(clientSockets[clientIndex], message.c_str());
-        if(loggingEnabled == true) cout << "Sent message '" << message << "' to client " << clientIndex << "\n";
-        setWait(clientIndex, true);
-    }
-}
-
-void PortableServer::receiveMultithreaded(int clientIndex) {
-    // Receive until the peer shuts down the connection
-    while(true) {
-        this_thread::sleep_for(chrono::milliseconds(1));
-        char* recvBuffer = new char[recvbuflen];
-        if(clientIndex == 1) {
-            int a = 0;
-        }
-        int iResult = portableRecv(clientSockets[clientIndex], recvBuffer);
-        //save message
-        if(iResult > 0) {
-            setGotNewMessage(clientIndex, true);
-            //save message
-            string newMsg;
-            for(int j = 0; j < iResult; j++) {
-                newMsg.push_back(recvBuffer[j]);
-            }
-            delete[] recvBuffer;
-            setLastMessage(clientIndex, newMsg);
-            setWait(clientIndex, false);
-            //connection setup
-            if(loggingEnabled == true) cout << "Received message '" << getLastMessageFromClient(clientIndex) << "' from client " << clientIndex << "\n";
-            this->respondToCommands(clientIndex);
-        }
-
-        if(iResult < 0) {
-            if(loggingEnabled == true) cout << "Lost connection to client.";
-            portableShutdown(clientSockets[clientIndex]);
-            return;
-        }
-    }
-}
-
 void PortableServer::respondToCommands(int clientIndex) {
     bool isCommand = false;//commands should not be used by handlers so we clear them at the end
-    string lastMessage = getLastMessageFromClient(clientIndex);
+    string lastMessage = getLastMessage(clientIndex);
     if(lastMessage.compare("12345") == 0) {
-        sendToClient(clientIndex, "12345");//sets wait to false
+        sendToSocket(clientIndex, "12345");//sets wait to false
         isCommand = true;
     }
     if(lastMessage.compare("getMyClientIndex") == 0) {
-        sendToClient(clientIndex, to_string(this->clientSockets.size() - 1));//sets wait to false
+        socketMtx.lock();
+        int newSocketIndex = this->sockets.size() - 1;
+        socketMtx.unlock();
+
+        sendToSocket(clientIndex, to_string(newSocketIndex));//sets wait to false
         isCommand = true;
     }
 
@@ -66,55 +29,7 @@ void PortableServer::respondToCommands(int clientIndex) {
     }
 }
 
-vector<string> PortableServer::getLastMessages() {
-    vector<string> temp = lastMessages;//copy
-    return temp;
-}
-
-
-//Portable functions used by the above code:------------------------------------------------------------------------------------------------
-
-bool PortableServer::newMessage(int clientIndex) {
-    bool temp = hasNewMessage(clientIndex);
-    setGotNewMessage(clientIndex, false);
-    return temp;
-}
-
-#ifdef __linux__ 
-int PortableServer::portableSend(int socket, const char* message) const {
-    int result = send(socket, message, strlen(message), 0);
-    return result;
-}
-
-int PortableServer::portableRecv(int socket, char* recvBuffer) {
-    return read(socket, recvBuffer, recvbuflen);
-}
-
-void PortableServer::portableShutdown(int socket) {
-    shutdown(socket, SHUT_RDWR);
-}
-
-#elif _WIN64
-int PortableServer::portableSend(SOCKET socket, const char* message) const {
-    int result = send(socket, message,(int) strlen(message), 0);
-    if(result == SOCKET_ERROR) {
-        cout << "Server Message Sending Error: \n" << message;
-    }
-    return result;
-}
-
-void PortableServer::portableShutdown(SOCKET socket) {
-    closesocket(socket);
-}
-
-int PortableServer::portableRecv(SOCKET socket, char* recvBuffer) {
-    return recv(socket, recvBuffer, recvbuflen, 0);
-}
-#endif
-
-
 //Server setup---------------------------------------------------------------------------------------------------------------------------
-
 
 /**
  * @brief Sets up a connection to the first client that tries to connect to this server's adress.
@@ -124,12 +39,8 @@ void listenForNextClient(PortableServer* server) {
 }
 
 vector<thread> connectThreads;
-/**
- * @brief Sets up a connection to the first client that tries to connect to this server's adress. Multithreaded method.
- */
 void PortableServer::portableConnect() {
-    connectedMtx.lock();
-
+    socketMtx.lock();
 
     int mutexIndex = lastMessages.size();
     waitMutices[mutexIndex].lock();
@@ -143,7 +54,7 @@ void PortableServer::portableConnect() {
     gotNewMessage.push_back(false);
     gotNewMessageMutices[mutexIndex].unlock();
 
-    connectedMtx.unlock();
+    socketMtx.unlock();
 #ifdef __linux__ 
 
     int listenSocket = 0;
@@ -189,11 +100,8 @@ void PortableServer::portableConnect() {
     }
     shutdown(listenSocket, SHUT_RDWR);
 
-    connectedMtx.lock();
-    clientSockets.push_back(tempClientSocket);
+    addSocket(tempClientSocket);
     connectThreads.push_back(thread(&listenForNextClient, this));
-    connectedMtx.unlock();
-
     this->receiveMultithreaded(connectThreads.size() - 1);
 
 #elif _WIN64
@@ -269,73 +177,9 @@ void PortableServer::portableConnect() {
     }
     closesocket(listenSocket);
 
-    connectedMtx.lock();
-    clientSockets.push_back(tempClientSocket);
+    addSocket(tempClientSocket);
     connectThreads.push_back(thread(&listenForNextClient, this));
-    connectedMtx.unlock();
 
     this->receiveMultithreaded(connectThreads.size() - 1);
-#endif
-}
-
-
-/**
- * @brief Gets the IP4-Adress of the machine this code is executed on
- *
- * @return string
- */
-string PortableServer::getIP() const {
-#ifdef __linux__ 
-
-    struct ifaddrs* ifaddr, * ifa;
-    int family, s;
-    char host[265];
-
-    if(getifaddrs(&ifaddr) == -1)
-    {
-        perror("getifaddrs");
-        exit(EXIT_FAILURE);
-    }
-
-
-    for(ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
-    {
-        if(ifa->ifa_addr == NULL)
-            continue;
-
-        s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, 265, NULL, 0, 1);
-
-        if( /*(strcmp(ifa->ifa_name,"wlan0")==0)&&( */ ifa->ifa_addr->sa_family == AF_INET) // )
-        {
-            if(s != 0)
-            {
-                cout << "getnameinfo() failed: " << gai_strerror(s) << "\n";
-                exit(EXIT_FAILURE);
-            }
-            cout << "\tInterface : <" << ifa->ifa_name << ">\n";
-            cout << "\t  Address : <" << host << ">\n";
-        }
-    }
-    freeifaddrs(ifaddr);
-    return string(host);
-#elif _WIN64
-    char hostname[255];
-    struct hostent* he;
-    struct in_addr** addr_list;
-
-    WSAData data;
-    WSAStartup(MAKEWORD(2, 2), &data);
-
-    gethostname(hostname, 255);
-
-    if((he = gethostbyname(hostname)) == NULL) {
-        std::cout << "gethostbyname error" << std::endl;
-        return string();
-    }
-    else {
-        addr_list =(struct in_addr**) he->h_addr_list;
-        return string(inet_ntoa(*addr_list[0]));
-    }
-    return string();
 #endif
 }

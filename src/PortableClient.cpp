@@ -8,7 +8,7 @@ const int recvbuflen = 512;
 /**
  * @brief Starts up client(on Windows, not necessary on Linux), does not yet try to connect to a server
  */
-PortableClient::PortableClient() {
+PortableClient::PortableClient() : Socket() {
 #ifdef _WIN32
     WSADATA wsaData;
     // Initialize Winsock
@@ -24,14 +24,15 @@ PortableClient::PortableClient() {
  * @brief Request the client count from the server to calculate this client's index in the servers client array
  *
  */
-void PortableClient::getMyIndexFromServer() {
-    this->sendToServer("getMyClientIndex");
+void PortableClient::getMyIndexFromServer(int serverIndex) {
+    sendToSocket(serverIndex, "getMyClientIndex");
     //receive my clientIndex
     char recvbuf[recvbuflen];
-    int msgLen = this->portableRecv(this->serverSocket, recvbuf);
+    
+    int msgLen = portableRecv(getSocket(serverIndex), recvbuf);
     string myClientIndex = readMsgBuffer(msgLen, recvbuf);
 
-    this->myPlayerIndex = std::stoi(myClientIndex);
+    myClientIndex[serverIndex] = std::stoi(myClientIndex);
 }
 
 /**
@@ -48,8 +49,8 @@ void PortableClient::connectToServer(string ip) {
     connectSocketsMtx.lock();//very important mutex. We DO NOT stop the searching threads when the time is over, thus we still have to use the mutex here.
     for(int i = 0; i < copy.size(); i++) {
         if(copy.at(i).compare(ip) == 0) {
-            serverSocket = connectSockets.at(i);//same index, pushed back simultanioisly
-            getMyIndexFromServer();//get index in server's client array
+            sockets.push_back(connectSockets.at(i));//same index, pushed back simultanioisly
+            getMyIndexFromServer(sockets.size() - 1);//get index from this new server
         }
         else {
             portableShutdown(connectSockets.at(i));
@@ -57,69 +58,8 @@ void PortableClient::connectToServer(string ip) {
     }
     connectSockets.clear();
     connectSocketsMtx.unlock();
-    setConnected(true);
     if(loggingEnabled == true) cout << "CLIENT_SOCKET: successfully connected to server!\n";
 }
-
-/**
- * @brief Sends a message to the server. Cannot send another message until the server answers.
- *
- * @param message
- */
-void PortableClient::sendToServer(string message) {
-    if(getWait() == false) {
-        portableSend(serverSocket, message.c_str());
-        if(loggingEnabled == true) cout << "Sent message '" << message << "' to server\n";
-        setWait(true);
-    }
-}
-
-/**
- * @brief Reads the message in the passed receive-buffer with lenght msgLenght. Makes sending the next message possible(in portableRecv).
- *
- * @param msgLenght Amount of characters that should be read
- * @param recvbuf
- * @return string
- */
-string PortableClient::readMsgBuffer(int msgLenght, char* recvbuf) {
-    string msg = string();
-    if(msgLenght > 0) {
-        setGotNewMessage(true);
-        //save message
-        for(int i = 0; i < msgLenght; i++) {
-            msg.push_back(recvbuf[i]);
-        }
-    }
-    if(msgLenght < 0) {
-        cout << "error, client received message with negative lenght";
-        exit(0);
-    }
-
-    if(msg.compare(getLastMessage()) != 0) {
-        if(loggingEnabled == true) cout << "Received message '" << msg << "' from server\n";
-    }
-    return msg;
-}
-
-/**
- * @brief Receives all messages in a seperate thread that you have to create. Sending happens in the main thread.
- */
-void PortableClient::receiveMultithreaded() {
-    while(true) {
-        char recvbuf[recvbuflen];
-        int msgLenght = portableRecv(serverSocket, recvbuf);
-        setLastMessage(readMsgBuffer(msgLenght, recvbuf));
-        this_thread::sleep_for(chrono::milliseconds(1));
-    }
-    portableShutdown(serverSocket);
-}
-
-bool PortableClient::newMessage() {
-    bool temp = hasNewMessage();
-    setGotNewMessage(false);
-    return temp;
-}
-
 
 //used by searchHostMultithreaded() and testIP()
 const unsigned int checkedIpCount = 255;
@@ -142,7 +82,7 @@ void searchHostsMultiThreaded(PortableClient* client) {
     threadFinishedMtx = new mutex[checkedIpCount];
     foundIP = "";
 
-    string myIP = client->getMyIP();
+    string myIP = client->getIP();
     for(int i = 0; i < 2; i++) {
         myIP.pop_back();
     }
@@ -210,7 +150,7 @@ void testIP(string myIP, int myIndex, PortableClient* client) {
     if(tempConnectSocket != INVALID_SOCKET) connectSuccess = true;
 #endif
     if(connectSuccess == true) {
-        client->portableSend(tempConnectSocket, "12345");
+        client->sendToSocket(tempConnectSocket, "12345");
         char* recvBuf = new char[recvbuflen];
         int res = client->portableRecv(tempConnectSocket, recvBuf);
         string msg;
@@ -236,11 +176,6 @@ void PortableClient::searchHosts(int waitTime) {
 }
 
 #ifdef __linux__ 
-int PortableClient::portableSend(int socket, string message) const {
-    int result = send(socket, message.c_str(), message.size(), 0);
-    return result;
-}
-
 int PortableClient::portableConnect(string connectIP) {
     int listenSocket;
     // Attempt to connect to an address until one succeeds
@@ -260,51 +195,12 @@ int PortableClient::portableConnect(string connectIP) {
     }
     return -1;
 }
-
-void PortableClient::portableShutdown(int socket) {
-    shutdown(socket, SHUT_RDWR);
-}
-
-int PortableClient::portableRecv(int socket, char* recvBuffer) {
-    int out = read(socket, recvBuffer, recvbuflen);
-    setWait(false);
-    return out;
-}
-
 #elif _WIN64
-
-void PortableClient::portableShutdown(SOCKET& socket) {
-    // shutdown the connection since we're done
-    int iResult = shutdown(socket, SD_SEND);
-    if(iResult == SOCKET_ERROR) {
-        cout << "Client shutdown failed with error: \n" << WSAGetLastError();
-        closesocket(socket);
-        WSACleanup();
-        exit(0);
-        return;
-    }
-    // cleanup
-    closesocket(socket);
-    WSACleanup();
-}
-
-int PortableClient::portableSend(SOCKET& socket, const char* message) const {
-    int result = send(socket, message,(int) strlen(message), 0);
-    if(result == SOCKET_ERROR) {
-        cout << "Client Message Sending Error: \n" << message;
-    }
-    return result;
-}
-
-int PortableClient::portableRecv(SOCKET& socket, char* recvBuffer) {
-    return recv(socket, recvBuffer, recvbuflen, 0);
-}
-
-SOCKET PortableClient::portableConnect(const char* connectIP) {
+SOCKET PortableClient::portableConnect(string connectIP) {
     struct addrinfo* result = nullptr;
     struct addrinfo* hints = new addrinfo();
 
-    int res = getaddrinfo(connectIP, port.c_str(), hints, &result);
+    int res = getaddrinfo(connectIP.c_str(), port.c_str(), hints, &result);
     if(res != 0) {
         cout << "Client getaddrinfo failed with error: \n";
         WSACleanup();
@@ -336,55 +232,3 @@ SOCKET PortableClient::portableConnect(const char* connectIP) {
     return INVALID_SOCKET;
 }
 #endif
-
-string PortableClient::getMyIP() const {
-#ifdef __linux__ 
-    struct ifaddrs* ifaddr, * ifa;
-    int family, s;
-    char host[265];
-
-    if(getifaddrs(&ifaddr) == -1)
-    {
-        perror("getifaddrs");
-        exit(EXIT_FAILURE);
-    }
-
-
-    for(ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
-    {
-        if(ifa->ifa_addr == NULL)
-            continue;
-
-        s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, 265, NULL, 0, 1);
-
-        if( /*(strcmp(ifa->ifa_name,"wlan0")==0)&&( */ ifa->ifa_addr->sa_family == AF_INET) // )
-        {
-            if(s != 0)
-            {
-                cout << "getnameinfo() failed: %s\n", gai_strerror(s);
-                exit(EXIT_FAILURE);
-            }
-        }
-    }
-    freeifaddrs(ifaddr);
-    return string(host);
-
-#elif _WIN64
-    char hostname[255];
-    struct hostent* he;
-    struct in_addr** addr_list;
-
-    WSAData data;
-    WSAStartup(MAKEWORD(2, 2), &data);
-
-    gethostname(hostname, 255);
-    if((he = gethostbyname(hostname)) == NULL) {
-        std::cout << "gethostbyname error" << std::endl;
-        return string();
-    }
-    else {
-        addr_list =(struct in_addr**) he->h_addr_list;
-        return string(inet_ntoa(*addr_list[0]));
-    }
-#endif
-}
