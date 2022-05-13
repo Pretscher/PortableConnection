@@ -123,8 +123,7 @@ string Socket::readMsgBuffer(int msgLenght, char* recvbuf) {
     return msg;
 }
 
-void Socket::receiveMultithreaded(int socketIndex) {
-    this_thread::sleep_for(chrono::milliseconds(1));
+void Socket::receiveNextMessage(int socketIndex) {
     char* recvBuffer = new char[recvbuflen];
     int msgLenght = portableRecv(getSocket(socketIndex), recvBuffer);
     if(msgLenght > 0) setGotNewMessage(socketIndex, true);
@@ -133,8 +132,6 @@ void Socket::receiveMultithreaded(int socketIndex) {
     if(loggingEnabled == true && newMsg.compare(getLastMessage(socketIndex)) != 0) {
         cout << "Received message '" << newMsg << "' from server\n";
     }
-    //respondToCommands(socketIndex); TODO implement in server, that this is also executed
-    
 }
 
 bool Socket::newMessage(int socketIndex) {
@@ -158,9 +155,9 @@ void Socket::sendToSocket(int socketIndex, string message) {
 }
 
 #ifdef  __linux__
-void Socket::addSocket(int socket) {
+void Socket::addSocket(int internalSocketID) {
     socketMtx.lock();
-    sockets.push_back(socket);
+    sockets.push_back(internalSocketID);
     socketMtx.unlock();
     int mutexIndex = lastMessages.size();
     waitMutices[mutexIndex].lock();

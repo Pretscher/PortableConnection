@@ -55,14 +55,15 @@ public:
     * @param socketIndex
     * @param message
     */
-    void sendToSocket(int index, string message);
+    void sendToSocket(int socketIndex, string message);
 
     /**
-    * @brief Waits for messages from a client. Has to be done in a seperate thread.
+    * @brief Waits for messages from a client till a message is received or a timeout. 
+    * Pushes new message back into "LastMessage[socketIndex]"
     *
     * @param socketIndex
     */
-    void receiveMultithreaded(int i);
+    void receiveNextMessage(int socketIndex);
 
     /**
      * @brief Threadsafely Get the Last Message
@@ -160,7 +161,7 @@ protected:
      * 
      * @param socket 
      */
-    void addSocket(int socket);
+    void addSocket(int internalSocketID);
     inline int getSocket(int socketIndex) {
         socketMtx.lock();
         int temp = sockets[socketIndex];

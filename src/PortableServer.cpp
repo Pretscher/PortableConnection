@@ -4,7 +4,8 @@ using namespace std;
 
 void PortableServer::startEventloop(int clientIndex) {
     while(true) {
-        receiveMultithreaded(clientIndex);
+        this_thread::sleep_for(chrono::milliseconds(1));
+        receiveNextMessage(clientIndex);
         respondToCommands(clientIndex);
     }
 }

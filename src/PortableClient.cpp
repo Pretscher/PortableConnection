@@ -141,14 +141,14 @@ void testIP(string myIP, int myIndex, PortableClient* client) {
     bool connectSuccess = false;
     //tempConnectSocket has different data type depending on OS so uhm... this code is awful but it does the job
 #ifdef __linux__ 
-    int tempConnectSocket = client->portableConnect(myIP.c_str());
+    int tempConnectSocket = client->portableConnect(myIP);
     if(tempConnectSocket >= 0) connectSuccess = true;
 #elif _WIN64
     SOCKET tempConnectSocket = client->portableConnect(myIP);
     if(tempConnectSocket != INVALID_SOCKET) connectSuccess = true;
 #endif
     if(connectSuccess == true) {
-        client->sendToSocket(tempConnectSocket, "12345");
+        client->portableSend(tempConnectSocket, "12345");
         char* recvBuf = new char[recvbuflen];
         int res = client->portableRecv(tempConnectSocket, recvBuf);
         string msg;
