@@ -25,7 +25,7 @@ PortableClient::PortableClient() : Socket() {
  *
  */
 void PortableClient::getMyIndexFromServer(int serverIndex) {
-    sendToSocket(serverIndex, "getMyClientIndex");
+    sendToSocket(getSocket(serverIndex), "getMyClientIndex");
     //receive my clientIndex
     char recvbuf[recvbuflen];
     
@@ -49,7 +49,7 @@ void PortableClient::connectToServer(string ip) {
     connectSocketsMtx.lock();//very important mutex. We DO NOT stop the searching threads when the time is over, thus we still have to use the mutex here.
     for(int i = 0; i < copy.size(); i++) {
         if(copy.at(i).compare(ip) == 0) {
-            sockets.push_back(connectSockets.at(i));//same index, pushed back simultanioisly
+            addSocket(connectSockets.at(i));
             getMyIndexFromServer(sockets.size() - 1);//get index from this new server
         }
         else {
@@ -113,11 +113,10 @@ void searchHostsMultiThreaded(PortableClient* client) {
             if(threadFinished[i] == false) {
                 finished = false;
             }
-            
             threadFinishedMtx[i].unlock();
         }
         if(finished == true) {
-            //cout << "All threads for searching hosts deleted\n";
+            cout << "All threads for searching hosts deleted\n";
             delete[] threads;
             delete[] mutices;
             delete[] threadFinished;
@@ -126,11 +125,10 @@ void searchHostsMultiThreaded(PortableClient* client) {
 }
 
 
-
-//Portable functions used on both operating systems for the above code:--------------------------------------------------------------------
-
-
-
+void PortableClient::searchHosts(int waitTime) {
+    searchingHosts = std::thread(&searchHostsMultiThreaded, this);
+    this_thread::sleep_for(chrono::milliseconds(waitTime));
+}
 /**
  * @brief checks if the ip passed is a server socket.
  *
@@ -170,10 +168,13 @@ void testIP(string myIP, int myIndex, PortableClient* client) {
     threadFinishedMtx[myIndex].unlock();
 }
 
-void PortableClient::searchHosts(int waitTime) {
-    searchingHosts = std::thread(&searchHostsMultiThreaded, this);
-    this_thread::sleep_for(chrono::milliseconds(waitTime));
-}
+
+
+//Portable functions used on both operating systems for the above code:--------------------------------------------------------------------
+
+
+
+
 
 #ifdef __linux__ 
 int PortableClient::portableConnect(string connectIP) {

@@ -124,19 +124,17 @@ string Socket::readMsgBuffer(int msgLenght, char* recvbuf) {
 }
 
 void Socket::receiveMultithreaded(int socketIndex) {
-    // Receive until the peer shuts down the connection
-    while(true) {
-        this_thread::sleep_for(chrono::milliseconds(1));
-        char* recvBuffer = new char[recvbuflen];
-        int msgLenght = portableRecv(getSocket(socketIndex), recvBuffer);
-        if(msgLenght > 0) setGotNewMessage(socketIndex, true);
-        string newMsg = readMsgBuffer(msgLenght, recvBuffer);
+    this_thread::sleep_for(chrono::milliseconds(1));
+    char* recvBuffer = new char[recvbuflen];
+    int msgLenght = portableRecv(getSocket(socketIndex), recvBuffer);
+    if(msgLenght > 0) setGotNewMessage(socketIndex, true);
+    string newMsg = readMsgBuffer(msgLenght, recvBuffer);
 
-        if(loggingEnabled == true && newMsg.compare(getLastMessage(socketIndex)) != 0) {
-            cout << "Received message '" << newMsg << "' from server\n";
-        }
-        //respondToCommands(socketIndex); TODO implement in server, that this is also executed
+    if(loggingEnabled == true && newMsg.compare(getLastMessage(socketIndex)) != 0) {
+        cout << "Received message '" << newMsg << "' from server\n";
     }
+    //respondToCommands(socketIndex); TODO implement in server, that this is also executed
+    
 }
 
 bool Socket::newMessage(int socketIndex) {

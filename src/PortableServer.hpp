@@ -45,5 +45,6 @@ private:
      *
      * @param clientIndex
      */
-    void respondToCommands(int index);
+    void respondToCommands(int clientIndex);
+    void startEventloop(int clientIndex);
 };

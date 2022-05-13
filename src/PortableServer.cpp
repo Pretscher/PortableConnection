@@ -2,6 +2,13 @@
 
 using namespace std;
 
+void PortableServer::startEventloop(int clientIndex) {
+    while(true) {
+        receiveMultithreaded(clientIndex);
+        respondToCommands(clientIndex);
+    }
+}
+
 void PortableServer::waitForClient() {
     portableConnect();//listen for clients
 }
@@ -102,8 +109,8 @@ void PortableServer::portableConnect() {
 
     addSocket(tempClientSocket);
     connectThreads.push_back(thread(&listenForNextClient, this));
-    this->receiveMultithreaded(connectThreads.size() - 1);
 
+    startEventloop(connectThreads.size() - 1);
 #elif _WIN64
     WSADATA wsaData;
     SOCKET listenSocket = INVALID_SOCKET;
