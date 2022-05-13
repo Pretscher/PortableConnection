@@ -25,7 +25,7 @@ PortableClient::PortableClient() : Socket() {
  *
  */
 void PortableClient::getMyIndexFromServer(int serverIndex) {
-    sendToSocket(getSocket(serverIndex), "getMyClientIndex");
+    sendToSocket(serverIndex, "getMyClientIndex");
     //receive my clientIndex
     char recvbuf[recvbuflen];
     
@@ -116,11 +116,11 @@ void searchHostsMultiThreaded(PortableClient* client) {
             threadFinishedMtx[i].unlock();
         }
         if(finished == true) {
-            cout << "All threads for searching hosts deleted. Trying to free memory: \n";
-            this_thread::sleep_for(1000ms);
-            delete[] threads;
-            delete[] mutices;
-            delete[] threadFinished;
+           // cout << "All threads for searching hosts deleted. Trying to free memory: \n";
+            //this_thread::sleep_for(1000ms);
+          //  delete[] threads;
+           // delete[] mutices;
+            //delete[] threadFinished;
         }
     }
 }

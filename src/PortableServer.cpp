@@ -18,7 +18,6 @@ void PortableServer::respondToCommands(int clientIndex) {
 
     bool isCommand = false;//commands should not be used by handlers so we clear them at the end
     string lastMsg = getLastMessage(clientIndex);
-    if(loggingEnabled == true) cout << "\nResponding to command: '" << lastMsg << "'\n";
     if(lastMsg.compare("12345") == 0) {
         sendToSocket(clientIndex, "12345");//sets wait to false
         isCommand = true;
