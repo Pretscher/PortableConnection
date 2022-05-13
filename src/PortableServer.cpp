@@ -113,8 +113,8 @@ void PortableServer::portableConnect() {
     shutdown(listenSocket, SHUT_RDWR);
 
     addSocket(tempClientSocket);
-    startEventloop(connectThreads.size());
     connectThreads.push_back(thread(&listenForNextClient, this));
+    startEventloop(connectThreads.size() - 1);
 
 #elif _WIN64
     WSADATA wsaData;
@@ -191,7 +191,6 @@ void PortableServer::portableConnect() {
 
     addSocket(tempClientSocket);
     connectThreads.push_back(thread(&listenForNextClient, this));
-
-    this->receiveMultithreaded(connectThreads.size() - 1);
+    startEventloop(connectThreads.size() - 1);
 #endif
 }
