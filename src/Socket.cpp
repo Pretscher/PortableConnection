@@ -130,7 +130,7 @@ void Socket::receiveNextMessage(int socketIndex) {
     string newMsg = readMsgBuffer(msgLenght, recvBuffer);
 
     if(loggingEnabled == true && newMsg.compare(getLastMessage(socketIndex)) != 0) {
-        cout << "Received message '" << newMsg << "' from server\n";
+        cout << "Received message '" << newMsg << "' from socket " << socketIndex << "\n";
     }
 }
 
@@ -149,7 +149,7 @@ vector<string> Socket::getLastMessages() {
 void Socket::sendToSocket(int socketIndex, string message) {
     if(isWaiting(socketIndex) == false) {
         int iResult = portableSend(getSocket(socketIndex), message.c_str());
-        if(loggingEnabled == true) cout << "Sent message '" << message << "' to client " << socketIndex << "\n";
+        if(loggingEnabled == true) cout << "Sent message '" << message << "' to socket " << socketIndex << "\n";
         setWait(socketIndex, true);
     }
 }
